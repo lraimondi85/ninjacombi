@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ricettario Combi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d5c6e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ricettario">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+.top-in{padding-top:calc(12px + env(safe-area-inset-top, 0px))}
+.top-in{padding-left:calc(20px + env(safe-area-inset-left, 0px)); padding-right:calc(20px + env(safe-area-inset-right, 0px))}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@200..800&display=swap" rel="stylesheet">
+<style>
+/* Idea: un piano di lavoro in acciaio chiaro. L'unico elemento forte è il pannello scuro che riprende i comandi della Combi:
+   selettore, modalità, temperatura, tempo e acqua in cifre grandi. Ambra = calore e lato Air Fry, blu = acqua e vapore. */
+:root{
+  --bg:#eceff1; --surface:#ffffff; --surface-2:#f5f7f8; --ink:#1b2127; --muted:#56616c; --edge:#7d8995; --line:#dce1e6;
+  --panel:#23292f; --panel-ink:#f4f6f8; --panel-muted:#a9b4bf; --panel-edge:#23292f; --panel-heat:#ffb066; --panel-steam:#8cc0ff;
+  --heat:#b0510c; --heat-soft:#fbecdd; --steam:#1e66c9; --steam-soft:#e2ecfa;
+  --action:#23292f; --action-ink:#ffffff; --focus:#1e66c9;
+  --warn:#8a5a00; --warn-soft:#fff3d1; --done:#2f7a4c;
+  --font:"Atkinson Hyperlegible Next","Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --r-card:12px; --r-ctl:9px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121619; --surface:#1b2126; --surface-2:#20272d; --ink:#e8ecef; --muted:#a3aeb8; --edge:#6e7b87; --line:#2c353d;
+    --panel:#0d1013; --panel-ink:#f4f6f8; --panel-muted:#a3aeb8; --panel-edge:#3a454f; --panel-heat:#ffb066; --panel-steam:#8cc0ff;
+    --heat:#f2a65a; --heat-soft:#3a2816; --steam:#7db4f7; --steam-soft:#172c47;
+    --action:#e8ecef; --action-ink:#121619; --focus:#7db4f7;
+    --warn:#f2c35a; --warn-soft:#3a3016; --done:#6fcf97;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121619; --surface:#1b2126; --surface-2:#20272d; --ink:#e8ecef; --muted:#a3aeb8; --edge:#6e7b87; --line:#2c353d;
+  --panel:#0d1013; --panel-ink:#f4f6f8; --panel-muted:#a3aeb8; --panel-edge:#3a454f; --panel-heat:#ffb066; --panel-steam:#8cc0ff;
+  --heat:#f2a65a; --heat-soft:#3a2816; --steam:#7db4f7; --steam-soft:#172c47;
+  --action:#e8ecef; --action-ink:#121619; --focus:#7db4f7;
+  --warn:#f2c35a; --warn-soft:#3a3016; --done:#6fcf97;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font-family:var(--font); font-size:17px; line-height:1.55; -webkit-text-size-adjust:100%}
+h1,h2,h3{line-height:1.2; margin:0; text-wrap:balance; font-weight:800}
+p{margin:0}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+svg.i{width:1.05em; height:1.05em; flex:none; vertical-align:-.15em}
+
+/* Testata e navigazione */
+.top{background:var(--surface); border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px; margin:0 auto; padding:10px 20px; display:flex; gap:18px; align-items:center; flex-wrap:wrap}
+.brand{display:flex; gap:10px; align-items:center; margin-right:auto}
+.brand h1{font-size:1.25rem}
+.brand p{color:var(--muted); font-size:.85rem}
+.nav{display:flex; gap:2px}
+.nav button{border:0; background:none; padding:10px 14px; min-height:44px; border-radius:var(--r-ctl); cursor:pointer; font-weight:600; color:var(--muted); display:flex; gap:8px; align-items:center}
+.nav button:hover{color:var(--ink); background:var(--surface-2)}
+.nav button[aria-current="page"]{color:var(--ink); background:var(--surface-2); box-shadow:inset 0 -3px 0 var(--ink)}
+.nav .sh{display:none}
+
+/* Bottoni e controlli */
+.btn{border:1.5px solid var(--edge); background:var(--surface); padding:10px 16px; min-height:44px; border-radius:var(--r-ctl); cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; justify-content:center; text-decoration:none; color:var(--ink)}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--action); border-color:var(--action); color:var(--action-ink)}
+.btn.primary:hover{filter:brightness(1.15)}
+.btn.quiet{border-color:transparent; background:transparent; text-decoration:underline; text-underline-offset:3px}
+.btn.small{padding:7px 12px; min-height:38px; font-size:.92rem}
+.btn[disabled]{opacity:.55; cursor:not-allowed}
+.chip{border:1.5px solid var(--edge); background:var(--surface); border-radius:999px; padding:6px 14px; min-height:38px; cursor:pointer; font-size:.95rem; white-space:nowrap}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--action); color:var(--action-ink); border-color:var(--action)}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+input,select,textarea{border:1.5px solid var(--edge); background:var(--surface); border-radius:var(--r-ctl); padding:10px 12px; min-height:44px}
+textarea{resize:vertical}
+
+main{max-width:1120px; margin:0 auto; padding:24px 20px 80px}
+.page-head{display:grid; gap:6px; margin-bottom:18px}
+.page-head h2{font-size:1.6rem}
+.lead{color:var(--muted); max-width:64ch}
+
+/* Domanda */
+.ask{display:grid; gap:12px; max-width:820px}
+.ask label{font-size:1.6rem; font-weight:800}
+.ask-box{display:flex; gap:10px; align-items:stretch}
+.ask-box textarea{flex:1; min-height:56px; height:56px; font-size:1.1rem; padding:13px 14px}
+.ask-box .btn{flex:none; padding:0 22px}
+.ask-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.examples{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.examples > span{color:var(--muted); font-size:.92rem; margin-right:2px}
+.status{font-size:.95rem; color:var(--muted)}
+.status:empty{display:none}
+.hint{font-size:.92rem; color:var(--muted); max-width:70ch}
+
+/* Scheda ricetta */
+.result{margin-top:26px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); overflow:hidden}
+.card-head{padding:20px 22px 16px; display:grid; gap:6px}
+.kicker{color:var(--muted); font-size:.95rem}
+.kicker b{color:var(--ink)}
+.card-head h2{font-size:1.75rem}
+.source{font-size:.9rem; color:var(--muted); display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.source .est{background:var(--warn-soft); color:var(--warn); border-radius:6px; padding:1px 8px; font-weight:600}
+
+.panel{background:var(--panel); color:var(--panel-ink); margin:0 12px; border-radius:10px; border:1px solid var(--panel-edge); display:grid; grid-template-columns:auto minmax(0,1.3fr) repeat(3,minmax(0,1fr)); gap:0}
+.panel > div{padding:16px 18px; display:grid; gap:2px; align-content:start}
+.panel > div + div{border-left:1px solid rgba(255,255,255,.10)}
+.ro-l{color:var(--panel-muted); font-size:.85rem; font-weight:600; display:flex; gap:6px; align-items:center}
+.ro-v{font-size:2rem; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+.ro-s{color:var(--panel-muted); font-size:.85rem; line-height:1.35}
+.ro.mode .ro-v{font-size:1.55rem}
+.ro.temp .ro-v{color:var(--panel-heat)}
+.ro.water .ro-v{color:var(--panel-steam)}
+.ro.water.none .ro-v{color:var(--panel-ink); font-size:1.35rem}
+.switch{align-content:center !important}
+.switch svg{display:block; width:118px; height:auto}
+.sw-track{fill:none; stroke:var(--panel-muted); stroke-width:2}
+.sw-knob{fill:var(--panel-ink)}
+.sw-lab{fill:var(--panel-muted); font:700 12.5px var(--font); letter-spacing:.02em}
+.sw-lab.on{fill:var(--panel-ink)}
+
+.setup{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:18px; padding:18px 22px; align-items:start}
+.setup h3,.body h3{font-size:1.1rem; margin-bottom:8px}
+.levels{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+.levels li{display:grid; grid-template-columns:5.6rem 1fr; gap:10px; align-items:baseline}
+.levels .lv{font-weight:700; color:var(--muted); font-size:.92rem}
+.levels .w{color:var(--steam); font-weight:700}
+.start{margin-top:12px; font-size:.95rem; color:var(--muted); max-width:62ch}
+.diagram svg{width:100%; max-width:330px; height:auto; display:block; margin-left:auto}
+.svg-oven{fill:var(--surface-2); stroke:var(--edge); stroke-width:2}
+.svg-level{stroke:var(--edge); stroke-width:1; stroke-dasharray:3 4; opacity:.7}
+.svg-lab{fill:var(--ink); font:700 12px var(--font)}
+.svg-sub{fill:var(--muted); font:400 12px var(--font)}
+.svg-pan{fill:var(--surface); stroke:var(--ink); stroke-width:2}
+.svg-water{fill:var(--steam); opacity:.45}
+.svg-crisper{stroke:var(--ink); stroke-width:2.5; stroke-dasharray:4 3}
+.svg-tray{fill:var(--heat)}
+.svg-empty{fill:var(--muted); font:italic 11px var(--font)}
+
+.body{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); border-top:1px solid var(--line)}
+.body > div{padding:18px 22px}
+.body > div + div{border-left:1px solid var(--line); background:var(--surface-2)}
+.steps-hint{font-size:.88rem; color:var(--muted); margin:-4px 0 10px}
+.steps{list-style:none; margin:0; padding:0; display:grid; gap:6px; max-width:66ch}
+.step{width:100%; text-align:left; display:grid; grid-template-columns:2rem 1fr; gap:10px; align-items:start; background:none; border:1.5px solid transparent; border-radius:var(--r-ctl); padding:8px 8px; cursor:pointer; min-height:44px}
+.step:hover{background:var(--surface-2)}
+.step .n{width:1.75rem; height:1.75rem; border-radius:50%; border:1.5px solid var(--edge); display:grid; place-items:center; font-weight:700; font-size:.9rem; font-variant-numeric:tabular-nums}
+.step[aria-pressed="true"]{color:var(--muted)}
+.step[aria-pressed="true"] .n{background:var(--done); border-color:var(--done); color:#fff}
+.step[aria-pressed="true"] .n span{display:none}
+.step .ok{display:none}
+.step[aria-pressed="true"] .ok{display:block}
+.ing{margin:0; padding-left:1.1em; display:grid; gap:5px}
+.tip{margin-top:14px; padding:10px 14px; border-left:4px solid var(--steam); background:var(--steam-soft); border-radius:0 8px 8px 0; font-size:.97rem; max-width:66ch}
+.note-est{margin-top:10px; font-size:.92rem; color:var(--warn)}
+.actions{display:flex; flex-wrap:wrap; gap:10px; padding:14px 22px 18px; border-top:1px solid var(--line)}
+.alts{margin-top:18px; display:grid; gap:10px}
+.alts h3{font-size:1.05rem}
+
+/* Non trovi il piatto */
+.more{margin-top:18px; border-top:1px solid var(--line); padding-top:18px; display:grid; gap:12px}
+.more h3{font-size:1.15rem}
+.more .opts{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+.opt{border:1px solid var(--line); border-radius:var(--r-card); padding:14px; display:grid; gap:8px; align-content:start; background:var(--surface)}
+.opt b{font-size:1.05rem}
+.opt p{font-size:.94rem; color:var(--muted)}
+.opt .btn{justify-self:start}
+.conv{display:grid; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:16px}
+.conv .form-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.field.check{align-content:end}
+.field.check label{display:flex; gap:10px; align-items:center; font-weight:600}
+.field.check input{width:22px; height:22px; min-height:0}
+.settings{border-top:1px solid var(--line); padding-top:12px; max-width:820px}
+.settings summary{cursor:pointer; font-weight:700; min-height:44px; display:flex; align-items:center}
+.settings-body{display:grid; gap:10px; margin-top:6px; font-size:.97rem}
+.settings-body p{max-width:70ch}
+.settings-body a{color:var(--steam)}
+
+/* Elenco ricette */
+.filters{display:grid; gap:12px; margin-bottom:18px}
+.filter-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.search{flex:1 1 260px}
+.count{color:var(--muted); font-size:.95rem}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px}
+.rcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:14px 16px; display:grid; gap:8px; text-align:left; cursor:pointer; position:relative; min-height:44px}
+.rcard:hover{border-color:var(--edge)}
+.rc-title{font-weight:700; font-size:1.05rem; line-height:1.3; padding-right:22px}
+.rc-mode{display:flex; gap:8px; align-items:center; font-weight:600; font-size:.93rem}
+.dot{width:10px; height:10px; border-radius:50%; background:var(--steam); flex:none}
+.dot.air{background:var(--heat)}
+.rc-meta{display:flex; flex-wrap:wrap; gap:4px 14px; color:var(--muted); font-size:.92rem}
+.rc-meta span{display:inline-flex; gap:5px; align-items:center}
+.rc-meta .w{color:var(--steam); font-weight:700}
+.rc-flag{color:var(--warn); font-size:.85rem}
+.star{position:absolute; top:12px; right:12px; color:var(--heat)}
+.empty{padding:28px; text-align:center; color:var(--muted); border:1.5px dashed var(--edge); border-radius:var(--r-card)}
+
+/* Modalità */
+.legend{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; padding:18px 0 22px; border-bottom:1px solid var(--line)}
+.legend h3{font-size:1.05rem; margin-bottom:4px}
+.legend p{font-size:.95rem; color:var(--muted)}
+.modes{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; margin-top:22px}
+.side h3.side-t{font-size:1.15rem; margin-bottom:12px; display:flex; gap:10px; align-items:center}
+.mcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:14px 16px; display:grid; gap:8px; margin-bottom:12px; border-left:5px solid var(--steam)}
+.side.air .mcard{border-left-color:var(--heat)}
+.mcard h4{font-size:1.15rem; margin:0; display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap}
+.mcard h4 small{font-weight:400; color:var(--muted); font-size:.92rem}
+.mcard dl{display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:0; font-size:.95rem}
+.mcard dt{color:var(--muted); font-weight:600}
+.mcard dd{margin:0}
+.mcard .btn{justify-self:start}
+
+/* Le mie ricette */
+.form{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:18px; display:grid; gap:12px; margin-top:16px}
+.form-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px}
+.field{display:grid; gap:5px}
+.field label{font-weight:600; font-size:.95rem}
+.field input,.field select,.field textarea{width:100%}
+.field textarea{min-height:100px}
+.field.span2{grid-column:span 2}
+.field.span3{grid-column:1 / -1}
+.store-note{font-size:.95rem; color:var(--muted)}
+
+/* Dialogo */
+.overlay{position:fixed; inset:0; background:rgba(10,14,18,.6); display:flex; align-items:flex-start; justify-content:center; padding:32px 16px; overflow-y:auto; z-index:50}
+.dialog{width:min(1000px,100%); position:relative}
+.dialog .close{position:absolute; top:14px; right:14px; z-index:2}
+
+/* Timer */
+.timer{position:fixed; right:18px; bottom:18px; z-index:40; background:var(--panel); color:var(--panel-ink); border:1px solid var(--panel-edge); border-radius:12px; padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; box-shadow:0 10px 30px rgba(0,0,0,.3); max-width:calc(100vw - 36px)}
+.timer .tl{font-size:.85rem; color:var(--panel-muted); max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.timer .tt{font-weight:800; font-size:1.9rem; font-variant-numeric:tabular-nums; line-height:1.1}
+.timer button{background:transparent; color:inherit; border:1.5px solid var(--panel-muted); border-radius:8px; padding:8px 12px; min-height:44px; cursor:pointer; font-weight:700; white-space:nowrap}
+.timer.done{background:var(--heat); border-color:var(--heat); color:#fff}
+.timer.done .tl{color:#fff}
+@media (prefers-reduced-motion: no-preference){ .timer.done{animation:pulse 1s ease-in-out infinite} html{scroll-behavior:smooth} }
+@keyframes pulse{50%{transform:scale(1.03)}}
+
+footer{max-width:1120px; margin:0 auto; padding:0 20px 40px; color:var(--muted); font-size:.9rem}
+footer p{max-width:80ch}
+
+/* Tablet e telefono */
+@media (max-width:900px){
+  .panel{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .panel > .ro.mode{grid-column:2 / 4}
+  .panel > .ro.temp,.panel > .ro.time,.panel > .ro.water{border-top:1px solid rgba(255,255,255,.10)}
+  .panel > .ro.temp{border-left:0}
+}
+@media (max-width:820px){
+  body{font-size:16.5px}
+  .top-in{padding:10px 16px}
+  .brand p{display:none}
+  .nav{position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--surface); border-top:1px solid var(--line); padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); gap:4px; box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .nav button{flex:1 1 0; min-width:0; flex-direction:column; gap:2px; padding:6px 2px; font-size:.82rem; min-height:54px}
+  .nav button[aria-current="page"]{box-shadow:inset 0 3px 0 var(--ink)}
+  .nav button svg.i{width:22px; height:22px}
+  .nav .l{display:none} .nav .sh{display:inline}
+  main{padding:18px 16px 24px}
+  footer{padding-bottom:110px}
+  .ask label{font-size:1.35rem}
+  .ask-box{flex-direction:column}
+  .ask-box textarea{height:auto; min-height:64px}
+  .ask-box .btn{padding:12px 16px}
+  .examples{flex-wrap:nowrap; overflow-x:auto; margin:0 -16px; padding:2px 16px 6px; scrollbar-width:none}
+  .examples::-webkit-scrollbar{display:none}
+  .examples .chip{flex:none}
+  #mode-filter{flex-wrap:nowrap; overflow-x:auto; margin:0 -16px; padding:2px 16px 6px; scrollbar-width:none}
+  #mode-filter .chip{flex:none}
+  .card-head{padding:16px 16px 14px}
+  .card-head h2{font-size:1.45rem}
+  .panel{margin:0 8px}
+  .panel > div{padding:12px 12px}
+  .switch svg{width:108px}
+  .ro-v{font-size:1.5rem}
+  .ro.mode .ro-v{font-size:1.3rem}
+  .ro.water.none .ro-v{font-size:1.15rem}
+  .setup{grid-template-columns:1fr; padding:16px}
+  .diagram svg{margin:0 auto; max-width:280px}
+  .body{grid-template-columns:1fr}
+  .body > div{padding:16px}
+  .body > div + div{border-left:0; border-top:1px solid var(--line)}
+  .actions{padding:14px 16px 16px}
+  .actions .btn{flex:1 1 100%}
+  .more .opts{grid-template-columns:1fr}
+  .conv .form-grid,.form-grid{grid-template-columns:1fr 1fr}
+  .field.span2,.field.span3{grid-column:1 / -1}
+  .legend,.modes{grid-template-columns:1fr}
+  .timer{left:12px; right:12px; bottom:calc(76px + env(safe-area-inset-bottom, 0px))}
+  .timer > div{flex:1 1 100%; min-width:0}
+  .timer button{flex:1 1 0}
+  .timer .tl{max-width:100%}
+  .overlay{padding:8px 8px 90px}
+  .dialog .close{top:10px; right:10px}
+}
+@media (pointer: coarse){ .chip,.btn.small{min-height:44px} }
+@media (max-width:380px){ .levels li{grid-template-columns:1fr; gap:0} .ro-v{font-size:1.3rem} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect x="1" y="4" width="34" height="28" rx="7" fill="var(--panel)" stroke="var(--panel-edge)"/><rect x="6" y="9" width="24" height="13" rx="3" fill="var(--surface)"/><path d="M11 19c2-2 3.5 2 5.5 0s3.5 2 5.5 0" stroke="var(--steam)" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M12 13.5h12" stroke="var(--heat)" stroke-width="2.4" stroke-linecap="round"/><circle cx="29" cy="27" r="2" fill="var(--panel-ink)"/></svg>
+      <div><h1>Ricettario Combi</h1><p>Modalità, acqua e tempi per la Ninja Combi SFP700</p></div>
+    </div>
+    <nav class="nav" aria-label="Sezioni">
+      <button type="button" id="tab-assistente" data-view="assistente"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span class="l">Cosa cucino?</span><span class="sh">Cucino</span></button>
+      <button type="button" id="tab-ricette" data-view="ricette"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 9h6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="l">Ricette</span><span class="sh">Ricette</span></button>
+      <button type="button" id="tab-modalita" data-view="modalita"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="8" r="2.2" fill="currentColor"/></svg><span class="l">Le 12 modalità</span><span class="sh">Modalità</span></button>
+      <button type="button" id="tab-mie" data-view="mie"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span class="l">Le mie ricette</span><span class="sh">Mie ricette</span></button>
+    </nav>
+    <button class="btn small" id="install" hidden>Installa sul PC</button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <!-- COSA CUCINO -->
+  <section id="view-assistente" aria-labelledby="q-label">
+    <form class="ask" id="ask-form">
+      <label for="q" id="q-label">Cosa vuoi cucinare?</label>
+      <div class="ask-box">
+        <textarea id="q" rows="1" placeholder="Per esempio: pollo e patate" autocomplete="off"></textarea>
+        <button class="btn primary" type="submit">Dimmi come cuocerlo</button>
+      </div>
+      <div class="examples" id="examples"></div>
+      <div class="ask-row"><button class="btn small" type="button" id="ask-claude" hidden>Chiedi a Claude</button><span class="status" id="ask-status"></span></div>
+      <p class="hint" id="claude-hint">Il consiglio arriva dal ricettario integrato e funziona anche senza connessione. Se il piatto non c'è puoi convertire una ricetta da forno, cercarla sul web o chiedere all'AI.</p>
+      <details class="settings" id="ai-settings" hidden>
+        <summary>Ricerca con l'intelligenza artificiale (facoltativa)</summary>
+        <div class="settings-body">
+          <p>Per i piatti che non sono nel ricettario, l'app può chiedere a Claude, l'AI di Anthropic. Serve una <b>chiave API personale</b>: si crea su <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> e si paga a consumo, circa 1–2 centesimi a ricerca.</p>
+          <p>La chiave resta salvata solo su questo dispositivo e viene inviata soltanto ad Anthropic. Non metterla mai nei file su GitHub. Nella console imposta un limite di spesa mensile.</p>
+          <div class="form-grid">
+            <div class="field span2"><label for="ai-key">Chiave API</label><input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"></div>
+            <div class="field"><label for="ai-model">Modello</label><select id="ai-model"><option value="claude-sonnet-5-5">Sonnet 5.5, più preciso</option><option value="claude-haiku-5-5">Haiku 5.5, più economico</option></select></div>
+          </div>
+          <div class="ask-row"><button class="btn primary small" type="button" id="ai-save">Salva chiave</button><button class="btn small" type="button" id="ai-remove">Rimuovi chiave</button><span class="status" id="ai-status" role="status"></span></div>
+        </div>
+      </details>
+    </form>
+    <div class="result" id="result"></div>
+  </section>
+
+  <!-- RICETTE -->
+  <section id="view-ricette" aria-labelledby="h-ricette" hidden>
+    <div class="page-head"><h2 id="h-ricette">Ricette per modalità</h2><p class="lead">Ogni ricetta indica selettore, accessori e livello, acqua nella Combi Pan, temperatura e tempo.</p></div>
+    <div class="filters">
+      <div class="chips" id="mode-filter" role="group" aria-label="Filtra per modalità"></div>
+      <div class="filter-row">
+        <input class="search" id="r-search" type="search" placeholder="Cerca una ricetta o un ingrediente" aria-label="Cerca una ricetta o un ingrediente">
+        <select id="r-cat" aria-label="Categoria"></select>
+        <button class="chip" id="r-fav" aria-pressed="false" type="button">Solo preferiti</button>
+        <span class="count num" id="r-count" role="status"></span>
+      </div>
+    </div>
+    <div class="grid" id="r-grid"></div>
+  </section>
+
+  <!-- MODALITÀ -->
+  <section id="view-modalita" aria-labelledby="h-modalita" hidden>
+    <div class="page-head"><h2 id="h-modalita">Le 12 modalità della Ninja Combi</h2><p class="lead">Il selettore SmartSwitch sceglie il gruppo: in alto COMBI COOKER, con acqua e vapore; in basso AIR FRY/HOB, senza acqua. Valori dal manuale SFP700EU.</p></div>
+    <div class="legend" id="legend"></div>
+    <div class="modes" id="modes"></div>
+  </section>
+
+  <!-- LE MIE RICETTE -->
+  <section id="view-mie" aria-labelledby="h-mie" hidden>
+    <div class="page-head"><h2 id="h-mie">Le mie ricette</h2><p class="lead">Preferiti, consigli salvati e ricette scritte da te.</p><p class="store-note" id="store-note"></p></div>
+    <div class="ask-row"><button class="btn primary" id="new-recipe" type="button">Scrivi una nuova ricetta</button></div>
+    <form class="form" id="mine-form" hidden>
+      <div class="form-grid">
+        <div class="field span2"><label for="f-t">Titolo</label><input id="f-t" required></div>
+        <div class="field"><label for="f-m">Modalità</label><select id="f-m"></select></div>
+        <div class="field"><label for="f-temp">Temperatura</label><input id="f-temp" placeholder="es. 175 °C"></div>
+        <div class="field"><label for="f-time">Tempo</label><input id="f-time" placeholder="es. 12–14 min"></div>
+        <div class="field"><label for="f-tmin">Minuti per il timer</label><input id="f-tmin" type="number" min="0" max="720" inputmode="numeric"></div>
+        <div class="field"><label for="f-water">Acqua nella Combi Pan (ml)</label><input id="f-water" type="number" min="0" max="2000" step="10" inputmode="numeric"></div>
+        <div class="field"><label for="f-l1">Livello 1 (in basso)</label><select id="f-l1"><option value="pan">Combi Pan</option><option value="pan-crisper">Combi Pan con griglia Crisper</option><option value="tray">Bake Tray</option><option value="">Vuoto</option></select></div>
+        <div class="field"><label for="f-l2">Livello 2 (in alto)</label><select id="f-l2"><option value="">Vuoto</option><option value="tray">Bake Tray</option></select></div>
+        <div class="field span3"><label for="f-ing">Ingredienti, uno per riga</label><textarea id="f-ing"></textarea></div>
+        <div class="field span3"><label for="f-steps">Passaggi, uno per riga</label><textarea id="f-steps"></textarea></div>
+        <div class="field span3"><label for="f-tip">Note</label><input id="f-tip"></div>
+      </div>
+      <div class="ask-row"><button class="btn primary" type="submit">Salva ricetta</button><button class="btn" type="button" id="f-cancel">Annulla</button><span class="status" id="f-status" role="status"></span></div>
+    </form>
+    <div class="grid" id="mine-grid" style="margin-top:18px"></div>
+  </section>
+</main>
+
+<footer><p>Dati presi dal manuale e dal ricettario Ninja Combi SFP700EU. Dove il manuale non dà valori (Steam, Reheat e molte ricette italiane) i numeri sono stime pratiche, segnalate in giallo. Controlla sempre la cottura: per il pollo servono 75 °C al cuore.</p></footer>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title" id="dialog"></div>
+</div>
+
+<div class="timer" id="timer" hidden>
+  <div><div class="tl" id="t-label"></div><div class="tt" id="t-time" role="timer" aria-label="Tempo rimanente">00:00</div></div>
+  <button type="button" id="t-pause">Pausa</button>
+  <button type="button" id="t-plus">+1 min</button>
+  <button type="button" id="t-stop">Chiudi timer</button>
+</div>
+<div class="sr-only" id="sr-live" aria-live="polite"></div>
+
+<script>window.STANDALONE = true;</script>
+<script>
+/* ===== Modalità (dal manuale SFP700EU e dal ricettario Ninja) ===== */
+const MODES = {
+  cm: { name: "Combi Meals", it: "Pasti completi", side: "combi",
+    temp: "150–240 °C", time: "1–60 min (oltre 200 °C massimo 30 min)",
+    acc: "Combi Pan al livello 1 con cereali o pasta e il loro liquido; Bake Tray al livello 2 con proteine e verdure.",
+    water: "Il liquido è quello della base: 400 g di riso bianco + 945 ml d'acqua, 450 g di pasta + 1 litro.",
+    pre: "Genera prima il vapore (barre sul display), poi parte il timer. Il cibo va dentro dall'inizio.",
+    best: "Primo, secondo e contorno insieme, anche con proteine surgelate." },
+  cc: { name: "Combi Crisp", it: "Vapore + croccante", side: "combi",
+    temp: "150–240 °C", time: "1–45 min",
+    acc: "Combi Pan con l'acqua al livello 1 e cibo sul Bake Tray al livello 2; per pezzi grandi (pollo intero, arrosti, patate intere) griglia Crisper dentro la Combi Pan.",
+    water: "Verdure 120 ml · proteine fresche 240 ml · proteine surgelate 475 ml.",
+    pre: "Genera vapore, poi parte il timer. Il cibo va dentro dall'inizio.",
+    best: "Interno succoso ed esterno croccante: arrosti, pollo, patate, verdure." },
+  cb: { name: "Combi Bake", it: "Forno a vapore", side: "combi",
+    temp: "105–210 °C", time: "1 min – 1 h 15",
+    acc: "Combi Pan con l'acqua al livello 1. Sfoglia e lievitati piccoli sul Bake Tray al livello 2; torte e pane in stampo appoggiato sulla griglia Crisper dentro la Combi Pan.",
+    water: "120 ml per cotture fino a 15 min, 240 ml oltre i 15 min (salvo indicazioni della ricetta).",
+    pre: "Circa 20 minuti per generare vapore, poi parte il timer. Nei preparati per torte dimezza il tempo indicato sulla confezione.",
+    best: "Lievitati, cornetti, pane e torte soffici con crosta uniforme." },
+  rp: { name: "Rice/Pasta", it: "Riso e pasta", side: "combi",
+    temp: "automatica", time: "automatico (poi conteggio in avanti e mantenimento in caldo)",
+    acc: "Solo Combi Pan al livello 1 con cereale o pasta e liquido, mescolati.",
+    water: "Riso bianco 400 g + 945 ml · basmati 400 g + 900 ml · pasta 450 g + 1 litro + 1 cucchiaio d'olio.",
+    pre: "Programma automatico: emette un segnale a fine cottura.",
+    best: "Riso, cereali e pasta in un'unica teglia senza scolare." },
+  st: { name: "Steam", it: "Vapore", side: "combi",
+    temp: "non regolabile", time: "regolabile",
+    acc: "Acqua nella Combi Pan, griglia Crisper appoggiata sopra, cibo sulla griglia; tutto al livello 1.",
+    water: "Il manuale non indica una quantità: come regola pratica ≈ 240 ml ogni 10 minuti di vapore. Se finisce compare ADD WATER.",
+    pre: "Porta l'acqua a ebollizione, poi parte il timer. A fine uso fai un ciclo a vuoto per eliminare l'acqua residua.",
+    best: "Verdure delicate, ravioli, pesce, uova." },
+  pr: { name: "Prove", it: "Lievitazione", side: "combi",
+    temp: "20–35 °C (scatti di 5 °C)", time: "15 min – 4 h (scatti di 5 min)",
+    acc: "Griglia Crisper dentro la Combi Pan al livello 1, impasto in ciotola o stampo sopra.",
+    water: "Nelle ricette ufficiali si mettono 240 ml nella Combi Pan, che poi servono per la cottura a vapore successiva.",
+    pre: "Nessun preriscaldamento. È normale che l'apparecchio resti quasi freddo.",
+    best: "Impasti di pane, pizza, focaccia, brioche e cornetti crudi." },
+  af: { name: "Air Fry", it: "Frittura ad aria", side: "air",
+    temp: "150–240 °C", time: "fino a 1 h",
+    acc: "Griglia Crisper dentro la Combi Pan al livello 1.",
+    water: "Niente acqua.",
+    pre: "Aggiungi 5 minuti al tempo per il preriscaldamento e metti il cibo dopo i primi 5 minuti. Scuoti o gira a metà.",
+    best: "Surgelati, patatine, impanati, ali di pollo, verdure croccanti." },
+  bk: { name: "Bake", it: "Forno", side: "air",
+    temp: "120–210 °C", time: "fino a 4 h",
+    acc: "Combi Pan al livello 1 oppure Bake Tray o una teglia da forno normale (Bake funziona anche senza Combi Pan).",
+    water: "Niente acqua.",
+    pre: "Preriscaldamento di 3 minuti, poi parte il timer.",
+    best: "Pasta al forno, lasagne, pizza in teglia, torte salate, biscotti." },
+  gr: { name: "Grill", it: "Grill", side: "air",
+    temp: "regolabile", time: "fino a 30 min",
+    acc: "Bake Tray al livello 2 (vicino alla resistenza superiore).",
+    water: "Niente acqua.",
+    pre: "Nessuno: controlla spesso, scurisce in fretta.",
+    best: "Gratinare, bruschette, finire una cottura con la crosticina." },
+  rh: { name: "Reheat", it: "Riscaldare", side: "air",
+    temp: "regolabile", time: "regolabile",
+    acc: "Griglia Crisper nella Combi Pan al livello 1, oppure direttamente nella Combi Pan per i piatti umidi.",
+    water: "Niente acqua.",
+    pre: "Scalda senza seccare: copri con alluminio i piatti al sugo.",
+    best: "Avanzi di pizza, pasta al forno, fritti." },
+  sc: { name: "Slow Cook", it: "Cottura lenta", side: "air",
+    temp: "LO o HI", time: "LO 6–12 h · HI 4–12 h",
+    acc: "Solo Combi Pan al livello 1, senza griglia Crisper.",
+    water: "Solo i liquidi della ricetta (sugo, brodo).",
+    pre: "A fine tempo passa da sola in mantenimento in caldo.",
+    best: "Ragù, spezzatini, stracotti, legumi." },
+  ss: { name: "Sear/Sauté", it: "Rosolare", side: "air",
+    temp: "livelli Lo1, 2, 3, 4, Hi5", time: "conteggio in avanti",
+    acc: "Combi Pan al livello 1. Lo sportello deve restare aperto.",
+    water: "Niente acqua.",
+    pre: "Preriscalda 2–3 minuti. Si spegne da sola dopo 1 h (livelli 4 e Hi5) o 4 h (Lo1–3).",
+    best: "Soffritti, rosolare la carne prima della cottura lenta, ridurre i sughi." }
+};
+const MODE_ORDER = ["cm","cc","cb","rp","st","pr","af","bk","gr","rh","sc","ss"];
+
+/* Schema accessori per il disegno:
+   l1: "pan" | "pan-crisper" | "tray" | null ; l2: "tray" | null ; w: acqua sì/no */
+const R = [
+/* ---------- COMBI MEALS ---------- */
+{ id:"cm-salmone-riso", t:"Salmone glassato soia e miele con riso integrale e broccoli", m:"cm", cat:"Pasti completi", serv:"4–6",
+  d:{l1:"pan",l2:"tray",w:true}, water:415, wn:"415 ml d'acqua con il riso nella Combi Pan", temp:"175 °C", time:"13 min (+ circa 10 min di vapore iniziale)", tmin:13,
+  ing:["400 g di riso integrale parboiled","415 ml d'acqua","4–6 filetti di salmone da 170 g","120 ml di salsa di soia","80 ml di miele","2 cucchiai d'olio d'oliva","4 spicchi d'aglio tritati","1 cucchiaio di zenzero grattugiato","1 cucchiaino di pasta di peperoncino","215 g di cimette di broccoli in un cartoccio di alluminio"],
+  steps:["Metti riso e acqua nella Combi Pan, mescola e inseriscila al livello 1.","Mescola soia, miele, olio, aglio, zenzero e peperoncino. Metti 1,5 cucchiai di marinata sul Bake Tray, adagia il salmone e spennellalo con altra marinata.","Bake Tray al livello 2. Selettore su COMBI COOKER, Combi Meals, 175 °C, 13 minuti, avvia.","Quando mancano 7 minuti aggiungi il cartoccio di broccoli sul Bake Tray.","Sgrana il riso con una forchetta e servi."],
+  tip:"Con salmone surgelato aggiungi 3–4 minuti.", src:"ninja", kw:["salmone","riso integrale","broccoli","pesce e riso","soia","teriyaki"] },
+{ id:"cm-fajitas", t:"Straccetti di pollo alle spezie con riso e fagioli", m:"cm", cat:"Pasti completi", serv:"6–8",
+  d:{l1:"pan",l2:"tray",w:true}, water:945, wn:"945 ml d'acqua con il riso", temp:"150 °C", time:"10 min (+ circa 10 min di vapore)", tmin:10,
+  ing:["400 g di riso bianco risciacquato","2 lattine di fagioli neri (425 g) scolati","1 cucchiaio d'olio di semi","945 ml d'acqua","2 cucchiai di succo di lime","30 g di coriandolo o prezzemolo","680 g di petto di pollo a straccetti","2 peperoni rossi a strisce","1 cipolla a fette","1 cucchiaio d'olio d'oliva","2 cucchiaini di cumino","1 cucchiaio di spezie per fajitas"],
+  steps:["Nella Combi Pan unisci riso, fagioli, olio e acqua; livello 1.","Condisci pollo, peperoni e cipolla con olio e spezie e distribuiscili sul Bake Tray; livello 2.","COMBI COOKER, Combi Meals, 150 °C, 10 minuti.","A fine cottura mescola nel riso il lime e le erbe."],
+  tip:"Servi in tortillas con yogurt e avocado.", src:"ninja", kw:["fajitas","pollo e riso","straccetti","burrito","messicano","tortillas"] },
+{ id:"cm-penne-polpette", t:"Penne al pomodoro e olive con polpette e pane all'aglio", m:"cm", cat:"Pasti completi", serv:"6–8",
+  d:{l1:"pan",l2:"tray",w:true}, water:830, wn:"830 ml d'acqua con pasta e sugo", temp:"190 °C", time:"13 min (+ circa 9 min di vapore)", tmin:13,
+  ing:["500 g di penne","900 g di sugo di pomodoro","830 ml d'acqua","100 g di olive","1 cucchiaio d'olio","sale e pepe","450 g di polpette","56 g di burro morbido con 1 spicchio d'aglio e prezzemolo","½ baguette tagliata e avvolta nell'alluminio"],
+  steps:["Nella Combi Pan mescola penne, sugo, acqua, olive, olio, sale e pepe; livello 1.","Polpette unte d'olio e baguette spalmata di burro all'aglio (nell'alluminio) sul Bake Tray; livello 2.","COMBI COOKER, Combi Meals, 190 °C, 13 minuti.","Mescola la pasta prima di servire."],
+  tip:"Polpette surgelate: aggiungi 3–4 minuti.", src:"ninja", kw:["polpette","penne","pasta al pomodoro","pasta e polpette","pane all'aglio"] },
+{ id:"cm-pollo-funghi", t:"Sovracosce ai funghi con riso al dragoncello e fagiolini", m:"cm", cat:"Pasti completi", serv:"4–6",
+  d:{l1:"pan",l2:"tray",w:true}, water:830, wn:"830 ml d'acqua con il riso", temp:"190 °C", time:"17 min (+ circa 3 min di vapore)", tmin:17,
+  ing:["350 g di riso bianco","250 g di fagiolini surgelati","2 cucchiaini di dragoncello secco","2 cucchiai d'olio","830 ml d'acqua","6 sovracosce di pollo disossate","300 g di crema di funghi","170 g di funghi a fette","1 cucchiaio d'aglio in polvere","2 cucchiaini di amido di mais","sale e pepe"],
+  steps:["Riso, fagiolini, dragoncello, olio e acqua nella Combi Pan; livello 1.","Sul Bake Tray il pollo condito con crema di funghi, aglio e funghi; livello 2.","COMBI COOKER, Combi Meals, 190 °C, 17 minuti.","Sul Bake Tray stempera l'amido nel fondo di cottura per addensare la salsa."],
+  tip:"", src:"ninja", kw:["sovracosce","cosce di pollo","pollo ai funghi","funghi","riso"] },
+{ id:"cm-merluzzo-quinoa", t:"Merluzzo al crudo con verdure mediterranee e quinoa", m:"cm", cat:"Pasti completi", serv:"6",
+  d:{l1:"pan",l2:"tray",w:true}, water:850, wn:"850 ml d'acqua con la quinoa", temp:"220 °C", time:"15 min (+ circa 5 min di vapore)", tmin:15,
+  ing:["300 g di quinoa","850 ml d'acqua","½ cucchiaino di sale","2 cucchiai d'olio d'oliva","6 filetti di merluzzo da 120–140 g","6 fette di prosciutto crudo","2 zucchine a rondelle","200 g di pomodorini","3 cucchiai d'olio, 3 spicchi d'aglio, succo di ½ limone, 1 cucchiaino di sale","50 g di olive","6 cucchiai di pesto per servire"],
+  steps:["Quinoa, acqua, sale e olio nella Combi Pan; livello 1.","Avvolgi ogni filetto nel crudo. Sul Bake Tray merluzzo, zucchine e pomodorini conditi; livello 2.","COMBI COOKER, Combi Meals, 220 °C, 15 minuti.","Quando mancano 5 minuti aggiungi le olive. Servi con il pesto."],
+  tip:"", src:"ninja", kw:["merluzzo","quinoa","pesce bianco","verdure mediterranee","prosciutto"] },
+{ id:"cm-gamberi-riso", t:"Gamberi in agrodolce con riso saltato", m:"cm", cat:"Pasti completi", serv:"4–5", frozen:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:710, wn:"710 ml d'acqua con il riso", temp:"175 °C", time:"15 min (+ circa 7 min di vapore)", tmin:15,
+  ing:["300 g di riso bianco","710 ml d'acqua","600 g di gamberoni surgelati","100 ml di salsa agrodolce","210 g di ananas a pezzi","1 cucchiaio d'aceto di riso","1 cucchiaio d'olio","2 cucchiaini di amido di mais","1 peperone rosso","3 cipollotti","2 cucchiai di salsa di soia"],
+  steps:["Riso e acqua nella Combi Pan; livello 1.","Gamberi, ananas e peperone conditi con salsa, aceto, olio e amido sul Bake Tray; livello 2.","COMBI COOKER, Combi Meals, 175 °C, 15 minuti.","Mescola al riso soia e cipollotti."],
+  tip:"Versione vegetale: 680 g di tofu pressato.", src:"ninja", kw:["gamberi","gamberoni","agrodolce","riso cantonese","riso saltato","cinese"] },
+{ id:"cm-falafel-orzo", t:"Falafel con orzo cremoso agli spinaci", m:"cm", cat:"Pasti completi", serv:"4–6", frozen:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:1000, wn:"1 litro d'acqua con l'orzo (pasta)", temp:"175 °C", time:"12 min (+ circa 8 min di vapore)", tmin:12,
+  ing:["450 g di orzo (pastina a chicco)","1 litro d'acqua","100 g di spinaci","2 cucchiaini di sale","8–12 falafel surgelati","2 cucchiai di prezzemolo, 120 ml di tzatziki e 40 g di feta per finire"],
+  steps:["Orzo, acqua, spinaci e sale nella Combi Pan; livello 1.","Falafel sul Bake Tray; livello 2.","COMBI COOKER, Combi Meals, 175 °C, 12 minuti.","Mescola all'orzo prezzemolo, tzatziki e feta."],
+  tip:"", src:"ninja", kw:["falafel","orzo","vegetariano","spinaci","risoni"] },
+{ id:"cm-pollo-pasta", t:"Pollo e pasta (schema base)", m:"cm", cat:"Pasti completi", serv:"6",
+  d:{l1:"pan",l2:"tray",w:true}, water:1000, wn:"1 litro d'acqua con 450 g di pasta e 1 cucchiaio d'olio", temp:"200 °C", time:"15–18 min", tmin:16,
+  ing:["450 g di pasta corta","1 litro d'acqua","1 cucchiaio d'olio","6 petti di pollo da 170–230 g (freschi o surgelati)","olio, sale e spezie a piacere","fino a 300 g di verdure"],
+  steps:["Pasta, acqua e olio nella Combi Pan; livello 1. Le verdure tenere puoi metterle qui.","Pollo condito sul Bake Tray al livello 2; verdure dure all'inizio, quelle delicate negli ultimi 5–7 minuti.","COMBI COOKER, Combi Meals, 200 °C, 15–18 minuti.","Controlla che il pollo arrivi a 75 °C al cuore."],
+  tip:"Con sugo pronto: 450 g di pasta + 900 g di sugo + 710 ml d'acqua.", src:"ninja", kw:["pollo e pasta","petto di pollo","pasto completo","cena veloce"] },
+
+/* ---------- COMBI CRISP ---------- */
+{ id:"cc-patate-spicchi", t:"Patate a spicchi croccanti", m:"cc", cat:"Contorni", serv:"4",
+  d:{l1:"pan",l2:"tray",w:true}, water:120, wn:"120 ml (verdure)", temp:"205 °C", time:"15–20 min", tmin:18,
+  ing:["680–910 g di patate a pasta farinosa a spicchi","1 cucchiaio d'olio","sale, rosmarino, paprika"],
+  steps:["Versa 120 ml d'acqua nella Combi Pan e inseriscila al livello 1.","Condisci le patate e stendile sul Bake Tray; livello 2.","COMBI COOKER, Combi Crisp, 205 °C, 15–20 minuti.","Gira a metà cottura."],
+  tip:"Per patate a cubetti da 2,5 cm stessi tempi.", src:"ninja", kw:["patate al forno","patate a spicchi","patate arrosto","spicchi","patate"] },
+{ id:"cc-patatine-casa", t:"Patatine fatte in casa", m:"cc", cat:"Contorni", serv:"4",
+  d:{l1:"pan",l2:"tray",w:true}, water:120, wn:"120 ml (verdure)", temp:"230 °C", time:"15–20 min", tmin:18,
+  ing:["680–910 g di patate a bastoncino","1 cucchiaio d'olio","sale"],
+  steps:["Lascia le patate in ammollo 30 minuti, poi asciugale bene.","120 ml d'acqua nella Combi Pan al livello 1.","Patate condite sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 230 °C, 15–20 minuti, mescolando a metà."],
+  tip:"Per patatine surgelate usa Air Fry.", src:"ninja", kw:["patatine fresche","patatine fatte in casa","patate fritte","french fries","chips"] },
+{ id:"cc-pollo-intero", t:"Pollo intero arrosto", m:"cc", cat:"Secondi di carne", serv:"4–6",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml (proteine fresche) sotto la griglia", temp:"205 °C", time:"35–40 min", tmin:38,
+  ing:["1 pollo intero da 2–2,3 kg","2 cucchiai d'olio","sale, pepe, rosmarino, aglio"],
+  steps:["Versa 240 ml d'acqua nella Combi Pan e appoggia sopra la griglia Crisper.","Ungi e condisci il pollo, mettilo sulla griglia a petto in su. Combi Pan al livello 1.","COMBI COOKER, Combi Crisp, 205 °C, 35–40 minuti.","Controlla che la coscia arrivi a 75 °C. Lascia riposare 10 minuti."],
+  tip:"Un pollo più piccolo (1,5 kg) richiede circa 30 minuti.", src:"ninja", kw:["pollo intero","pollo arrosto","pollo al forno"] },
+{ id:"cc-fusi", t:"Fusi di pollo croccanti", m:"cc", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"220 °C", time:"20–25 min", tmin:22,
+  ing:["910 g di fusi di pollo","2 cucchiai d'olio","paprika, aglio, sale"],
+  steps:["240 ml d'acqua nella Combi Pan al livello 1.","Fusi conditi sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 220 °C, 20–25 minuti."],
+  tip:"Sovracosce con osso: 205 °C, 12–15 minuti. Ali: 205 °C, 20–25 minuti.", src:"ninja", kw:["fusi","fusi di pollo","cosce di pollo","sovracosce con osso","pollo"] },
+{ id:"cc-ali", t:"Ali di pollo succose e croccanti", m:"cc", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"205 °C", time:"20–25 min", tmin:22,
+  ing:["905 g di ali di pollo","sale, paprika affumicata, aglio","salsa barbecue a piacere"],
+  steps:["240 ml d'acqua nella Combi Pan al livello 1.","Ali condite sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 205 °C, 20–25 minuti.","Se vuoi, spennella di salsa negli ultimi 3 minuti."],
+  tip:"Ali surgelate: 475 ml d'acqua, 230 °C, 20–22 minuti.", src:"ninja", kw:["ali di pollo","alette","wings"] },
+{ id:"cc-arrosto", t:"Arrosto di manzo", m:"cc", cat:"Secondi di carne", serv:"6",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml (proteine fresche) sotto la griglia", temp:"175 °C", time:"37–40 min", tmin:38,
+  ing:["910 g – 1,4 kg di girello o controfiletto","2 cucchiai d'olio","sale, pepe, rosmarino"],
+  steps:["Rosola la carne su tutti i lati (anche con Sear/Sauté a sportello aperto).","240 ml d'acqua nella Combi Pan, griglia Crisper sopra, carne sulla griglia; livello 1.","COMBI COOKER, Combi Crisp, 175 °C, 37–40 minuti.","Fai riposare 10 minuti avvolto nell'alluminio prima di tagliare."],
+  tip:"Filetto di manzo: 185 °C, 25–30 minuti per una cottura media al sangue.", src:"ninja", kw:["arrosto","roast beef","manzo al forno","girello","filetto"] },
+{ id:"cc-salmone", t:"Salmone fresco", m:"cc", cat:"Secondi di pesce", serv:"6",
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"205 °C", time:"6–8 min", tmin:7,
+  ing:["6 filetti di salmone da 170–200 g","1 cucchiaio d'olio","sale, limone, aneto"],
+  steps:["240 ml d'acqua nella Combi Pan al livello 1.","Salmone unto e condito sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 205 °C, 6–8 minuti."],
+  tip:"Merluzzo fresco: 230 °C, 6–8 minuti.", src:"ninja", kw:["salmone","salmone fresco","filetti di salmone","pesce"] },
+{ id:"cc-salmone-surg", t:"Salmone surgelato", m:"cc", cat:"Secondi di pesce", serv:"5–6", frozen:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:475, wn:"475 ml (proteine surgelate)", temp:"230 °C", time:"10–13 min", tmin:12,
+  ing:["5–6 filetti di salmone surgelati da 170 g","2 cucchiai d'olio","sale e pepe"],
+  steps:["475 ml d'acqua nella Combi Pan al livello 1.","Filetti ancora surgelati, unti e conditi, sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 230 °C, 10–13 minuti."],
+  tip:"Merluzzo surgelato: 230 °C, 8–10 minuti. Gamberi surgelati: 230 °C, 2–4 minuti.", src:"ninja", kw:["salmone surgelato","pesce surgelato","merluzzo surgelato","filetti surgelati"] },
+{ id:"cc-petti-surg", t:"Petti di pollo surgelati", m:"cc", cat:"Secondi di carne", serv:"4", frozen:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:475, wn:"475 ml (proteine surgelate)", temp:"200 °C", time:"18–23 min", tmin:20,
+  ing:["4 petti di pollo surgelati da 115–170 g","2 cucchiai d'olio","sale, pepe, erbe"],
+  steps:["475 ml d'acqua nella Combi Pan al livello 1.","Petti ancora surgelati sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 200 °C, 18–23 minuti.","Controlla i 75 °C al cuore."],
+  tip:"Petti freschi: 240 ml d'acqua, 190 °C, 15–20 minuti.", src:"ninja", kw:["petto di pollo surgelato","pollo surgelato","petti di pollo","petto di pollo"] },
+{ id:"cc-patate-ripiene", t:"Patate ripiene al formaggio", m:"cc", cat:"Contorni", serv:"5",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:400, wn:"400 ml sotto la griglia", temp:"205 °C", time:"30 min, poi 10 min di Grill", tmin:30,
+  ing:["4–5 patate da 200–230 g","110 g di cheddar o fontina","120 ml di latte","4 cucchiai di panna acida o yogurt","erba cipollina, pancetta a piacere"],
+  steps:["400 ml d'acqua nella Combi Pan, griglia Crisper sopra, patate intere sulla griglia; livello 1.","COMBI COOKER, Combi Crisp, 205 °C, 30 minuti.","Taglia le patate, svuotale e schiaccia la polpa con latte, panna e metà formaggio. Riempi e copri col resto del formaggio.","Patate sul Bake Tray al livello 2: AIR FRY/HOB, Grill, 10 minuti."],
+  tip:"Patate intere semplici: 300 ml d'acqua, 205 °C, 30–40 minuti.", src:"ninja", kw:["patate ripiene","patate intere","patate al cartoccio","baked potato"] },
+{ id:"cc-focaccia", t:"Focaccia al rosmarino", m:"cc", cat:"Pane e lievitati", serv:"8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml nella Combi Pan, sotto la griglia", temp:"35 °C (lievitazione), poi 175 °C", time:"40 min di Prove + 20 min di Combi Crisp", tmin:20,
+  ing:["400 g di farina di forza","1 bustina di lievito secco","1,5 cucchiaini di sale","4 cucchiai d'olio d'oliva","250–300 ml d'acqua tiepida","rosmarino e sale grosso"],
+  steps:["Impasta farina, lievito, sale, 2 cucchiai d'olio e acqua fino a ottenere un impasto liscio.","Stendilo in una tortiera tonda da 22 cm unta. 240 ml d'acqua nella Combi Pan, griglia sopra, tortiera sulla griglia; livello 1.","COMBI COOKER, Prove, 35 °C, 40 minuti.","Fai le fossette con le dita, condisci con olio, rosmarino e sale grosso.","COMBI COOKER, Combi Crisp, 175 °C, 20 minuti (comprende 3–4 minuti di vapore)."],
+  tip:"", src:"ninja", kw:["focaccia","focaccia genovese","pane","schiacciata"] },
+{ id:"cc-verdure", t:"Verdure arrosto (broccoli, carote, cavolfiore, zucca)", m:"cc", cat:"Contorni", serv:"4–6",
+  d:{l1:"pan",l2:"tray",w:true}, water:120, wn:"120 ml (verdure)", temp:"205–220 °C", time:"10–25 min secondo la verdura", tmin:15,
+  ing:["Broccoli 600–700 g: 220 °C, 10–12 min","Cavolini 680–900 g: 220 °C, 10–12 min","Carote 680 g: 220 °C, 18–22 min","Cavolfiore 600–700 g: 205 °C, 20–25 min","Barbabietole 680–900 g: 205 °C, 18–20 min","Zucca intera: 205 °C, 12–15 min","Patate dolci 1 kg: 230 °C, 15–20 min","1–2 cucchiai d'olio, sale"],
+  steps:["120 ml d'acqua nella Combi Pan al livello 1.","Verdure condite in un solo strato sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, temperatura e tempo dalla lista ingredienti.","Mescola a metà cottura."],
+  tip:"", src:"ninja", kw:["verdure arrosto","verdure al forno","broccoli","carote","cavolfiore","cavolini","zucca","barbabietole","patate dolci"] },
+
+/* ---------- COMBI BAKE ---------- */
+{ id:"cb-cornetti-crudi", t:"Cornetti surgelati crudi (da lievitare)", m:"cb", cat:"Pane e lievitati", serv:"6–8", frozen:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml nella Combi Pan (ne servono almeno 120 ml quando parte la cottura)", temp:"35 °C (lievitazione), poi 175 °C", time:"60–90 min di Prove + circa 20 min di vapore + 12–14 min", tmin:13,
+  ing:["6–8 cornetti surgelati crudi","1 uovo sbattuto con 1 cucchiaio d'acqua","zucchero a velo (facoltativo)"],
+  steps:["Disponi i cornetti distanziati sul Bake Tray con carta forno.","240 ml d'acqua nella Combi Pan al livello 1, Bake Tray al livello 2.","COMBI COOKER, Prove, 35 °C, 60–90 minuti, finché raddoppiano di volume.","Spennella con l'uovo. Controlla che nella Combi Pan ci siano almeno 120 ml d'acqua.","COMBI COOKER, Combi Bake, 175 °C, 12–14 minuti. I circa 20 minuti di vapore iniziale fanno già parte della cottura."],
+  tip:"Se lieviti fuori dall'apparecchio (2–3 ore a temperatura ambiente) metti 120 ml d'acqua e passa subito a Combi Bake.", src:"adattata",
+  kw:["cornetto","cornetti","croissant","brioche","cornetti surgelati","croissant surgelati","da lievitare","crudi"] },
+{ id:"cb-pain-choc", t:"Fagottini di sfoglia al cioccolato (pain au chocolat)", m:"cb", cat:"Dolci", serv:"6",
+  d:{l1:"pan",l2:"tray",w:true}, water:120, wn:"120 ml (cottura breve)", temp:"175 °C", time:"12 min (+ circa 20 min di vapore iniziale)", tmin:12,
+  ing:["320 g di pasta sfoglia rettangolare","100 g di cioccolato in tavoletta diviso in 6 pezzi","1 uovo + 1 cucchiaio d'acqua"],
+  steps:["Taglia la sfoglia in 6 rettangoli, metti un pezzo di cioccolato su ognuno e arrotola.","Disponili sul Bake Tray con la chiusura sotto e spennella con l'uovo.","120 ml d'acqua nella Combi Pan al livello 1, Bake Tray al livello 2.","COMBI COOKER, Combi Bake, 175 °C, 12 minuti."],
+  tip:"Stessa impostazione per sfogliatine, ventagli e saccottini con pasta sfoglia cruda.", src:"ninja", kw:["pain au chocolat","sfoglia","pasta sfoglia","saccottini","sfogliatine","fagottini","cioccolato"] },
+{ id:"cb-torta-mele", t:"Torta di mele", m:"cb", cat:"Dolci", serv:"6–8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:180, wn:"180 ml sotto la griglia", temp:"160 °C", time:"25 min (+ circa 20 min di vapore)", tmin:25,
+  ing:["140 g di burro","200 g di farina autolievitante (o 00 + 1 bustina di lievito)","140 g di zucchero di canna + 1 cucchiaio","1 cucchiaino di cannella","2 uova","2 cucchiai di latte","2 mele a fettine"],
+  steps:["Monta burro e zucchero, aggiungi uova, farina, cannella e latte.","Versa in una tortiera da 22 cm imburrata e copri con le mele e il cucchiaio di zucchero.","180 ml d'acqua nella Combi Pan, griglia Crisper sopra, tortiera sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 160 °C, 25 minuti. Prova lo stecchino a 20 minuti."],
+  tip:"", src:"ninja", kw:["torta di mele","torta","dolce alle mele","ciambellone","torta soffice"] },
+{ id:"cb-cheesecake", t:"Cheesecake al cioccolato", m:"cb", cat:"Dolci", serv:"8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:180, wn:"180 ml sotto la griglia", temp:"175 °C", time:"10 min (+ circa 15 min di vapore), poi frigo", tmin:10,
+  ing:["175 g di biscotti al cioccolato","60 g di burro fuso","200 g di cioccolato fondente","125 ml di panna","350 g di formaggio spalmabile","100 g di zucchero","1 cucchiaino di vaniglia","2 uova"],
+  steps:["Base: biscotti tritati e burro pressati in una tortiera da 22 cm.","Sciogli cioccolato e panna; mescola con formaggio, zucchero, vaniglia e uova e versa sulla base.","180 ml d'acqua nella Combi Pan, griglia sopra, tortiera sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 175 °C, 10 minuti.","Fai raffreddare e poi riposare in frigorifero almeno 4 ore."],
+  tip:"", src:"ninja", kw:["cheesecake","torta al formaggio","cheese cake"] },
+{ id:"cb-preparato", t:"Torta da preparato in busta", m:"cb", cat:"Dolci", serv:"8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml sotto la griglia", temp:"175 °C", time:"17 min (circa metà del tempo della confezione)", tmin:17,
+  ing:["1 preparato per torta (circa 425 g) con gli ingredienti indicati sulla confezione","tortiera da 20 cm"],
+  steps:["Prepara l'impasto come da confezione e versalo nella tortiera.","240 ml d'acqua nella Combi Pan, griglia sopra, tortiera sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 175 °C, 17 minuti. Regola generale: metà del tempo scritto sulla scatola."],
+  tip:"", src:"ninja", kw:["preparato","torta pronta","preparato per torta","torta in busta","mix"] },
+{ id:"cb-pane", t:"Pagnotta o pane in cassetta", m:"cb", cat:"Pane e lievitati", serv:"1 pane",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml (cottura oltre 15 min)", temp:"35 °C (lievitazione), poi 175 °C", time:"60 min di Prove + 25–30 min di Combi Bake", tmin:28,
+  ing:["500 g di farina di forza","320 ml d'acqua tiepida","7 g di lievito secco","10 g di sale","1 cucchiaio d'olio"],
+  steps:["Impasta tutto per 10 minuti e forma una pagnotta (o mettila in uno stampo da plumcake unto).","240 ml d'acqua nella Combi Pan, griglia sopra, pane sulla griglia; livello 1.","COMBI COOKER, Prove, 35 °C, circa 60 minuti, finché raddoppia.","Incidi la superficie. COMBI COOKER, Combi Bake, 175 °C, 25–30 minuti.","È cotto se battendo sotto suona vuoto; fai raffreddare su una gratella."],
+  tip:"Il vapore iniziale aiuta il pane a crescere e fa una crosta sottile.", src:"adattata", kw:["pane","pagnotta","pane in cassetta","pan bauletto","pane fatto in casa","filone"] },
+{ id:"cb-muffin", t:"Muffin", m:"cb", cat:"Dolci", serv:"8–10",
+  d:{l1:"pan",l2:"tray",w:true}, water:120, wn:"120 ml (cottura breve)", temp:"160 °C", time:"15 min (+ circa 20 min di vapore)", tmin:15,
+  ing:["250 g di farina","1 bustina di lievito","120 g di zucchero","2 uova","120 ml di latte","100 ml d'olio di semi","100 g di gocce di cioccolato o mirtilli","pirottini rigidi"],
+  steps:["Mescola secchi e liquidi separatamente, poi uniscili velocemente; aggiungi gocce o frutta.","Riempi i pirottini per 2/3 e disponili sul Bake Tray.","120 ml d'acqua nella Combi Pan al livello 1, Bake Tray al livello 2.","COMBI COOKER, Combi Bake, 160 °C, 15 minuti. Prova lo stecchino."],
+  tip:"", src:"adattata", kw:["muffin","cupcake","tortine","pirottini"] },
+{ id:"cb-plumcake", t:"Plumcake allo yogurt", m:"cb", cat:"Dolci", serv:"8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml (cottura oltre 15 min)", temp:"160 °C", time:"30–35 min (+ circa 20 min di vapore)", tmin:32,
+  ing:["3 uova","150 g di zucchero","125 g di yogurt","80 ml d'olio di semi","250 g di farina","1 bustina di lievito","scorza di limone"],
+  steps:["Monta uova e zucchero, aggiungi yogurt, olio, scorza e infine farina e lievito.","Versa in uno stampo da plumcake che entri nella Combi Pan.","240 ml d'acqua nella Combi Pan, griglia sopra, stampo sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 160 °C, 30–35 minuti. Prova lo stecchino a 28 minuti."],
+  tip:"", src:"adattata", kw:["plumcake","plum cake","torta allo yogurt","dolce da colazione"] },
+
+/* ---------- RICE/PASTA ---------- */
+{ id:"rp-riso-bianco", t:"Riso bianco a chicco lungo", m:"rp", cat:"Primi", serv:"6–8",
+  d:{l1:"pan",l2:null,w:true}, water:945, wn:"945 ml d'acqua + 1 cucchiaio d'olio", temp:"automatica", time:"automatico", tmin:0,
+  ing:["400 g di riso bianco risciacquato","945 ml d'acqua","1 cucchiaio d'olio","sale"],
+  steps:["Riso, acqua, olio e sale nella Combi Pan, mescola; livello 1.","COMBI COOKER, Rice/Pasta (impostazione riso), avvia.","Al segnale sgrana con una forchetta: poi parte il mantenimento in caldo."],
+  tip:"Basmati o jasmine: 400 g + 900 ml. Parboiled: 400 g + 415 ml. Riso selvaggio: 340 g + 830 ml + 2 cucchiai d'olio.", src:"ninja", kw:["riso","riso bianco","riso basmati","basmati","riso jasmine","riso parboiled","riso in bianco"] },
+{ id:"rp-pasta", t:"Pasta in bianco senza scolare", m:"rp", cat:"Primi", serv:"6",
+  d:{l1:"pan",l2:null,w:true}, water:1000, wn:"1 litro d'acqua + 1 cucchiaio d'olio", temp:"automatica", time:"automatico", tmin:0,
+  ing:["450 g di pasta corta (anche integrale, di legumi o senza glutine)","1 litro d'acqua","1 cucchiaio d'olio","sale"],
+  steps:["Pasta, acqua, olio e sale nella Combi Pan, mescola; livello 1.","COMBI COOKER, Rice/Pasta, con le frecce passa all'impostazione pasta, avvia.","Al segnale mescola e condisci."],
+  tip:"Noodles all'uovo o pasta di riso: 340 g.", src:"ninja", kw:["pasta","pasta in bianco","pasta lessa","pasta corta","penne","fusilli"] },
+{ id:"rp-pasta-sugo", t:"Pasta al pomodoro in un'unica teglia", m:"rp", cat:"Primi", serv:"6",
+  d:{l1:"pan",l2:null,w:true}, water:710, wn:"710 ml d'acqua + 910 g di sugo", temp:"automatica", time:"automatico", tmin:0,
+  ing:["450 g di pasta corta","910 g di passata o sugo pronto","710 ml d'acqua","1 cucchiaio d'olio","basilico, parmigiano"],
+  steps:["Pasta, sugo, acqua e olio nella Combi Pan, mescola bene; livello 1.","COMBI COOKER, Rice/Pasta, impostazione pasta.","Al segnale mescola, aggiungi basilico e parmigiano."],
+  tip:"Con salsa Alfredo o panna: 850 g di salsa + 600 ml d'acqua, senza olio.", src:"ninja", kw:["pasta al pomodoro","pasta al sugo","one pot pasta","pasta e sugo"] },
+{ id:"rp-risotto", t:"Risotto ai piselli e limone", m:"rp", cat:"Primi", serv:"4",
+  d:{l1:"pan",l2:null,w:true}, water:830, wn:"830 ml di brodo", temp:"automatica", time:"automatico", tmin:0,
+  ing:["200 g di riso Arborio o Carnaroli","830 ml di brodo vegetale caldo","150 g di piselli surgelati","scorza di 1 limone","30 g di burro e 40 g di parmigiano per mantecare"],
+  steps:["Riso, brodo e piselli nella Combi Pan, mescola; livello 1.","COMBI COOKER, Rice/Pasta, impostazione riso.","Al segnale manteca con burro, parmigiano e scorza di limone e lascia riposare 2 minuti."],
+  tip:"Se resta troppo liquido usa Sear/Sauté a sportello aperto per un paio di minuti mescolando.", src:"adattata", kw:["risotto","riso arborio","carnaroli","risotto ai piselli"] },
+{ id:"rp-couscous", t:"Cous cous perlato o quinoa", m:"rp", cat:"Primi", serv:"6",
+  d:{l1:"pan",l2:null,w:true}, water:945, wn:"Cous cous 945 ml · quinoa 830 ml", temp:"automatica", time:"automatico", tmin:0,
+  ing:["570 g di cous cous perlato con 945 ml d'acqua o brodo e 2 cucchiai d'olio","oppure 400 g di quinoa risciacquata con 830 ml d'acqua"],
+  steps:["Cereale e liquido nella Combi Pan, mescola; livello 1.","COMBI COOKER, Rice/Pasta, impostazione riso.","Sgrana e condisci con verdure, erbe e limone."],
+  tip:"", src:"ninja", kw:["cous cous","couscous","quinoa","cereali","farro","orzo perlato"] },
+
+/* ---------- STEAM ---------- */
+{ id:"st-verdure", t:"Verdure al vapore", m:"st", cat:"Contorni", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:480, wn:"≈ 480 ml sotto la griglia (stima: 240 ml ogni 10 min)", temp:"non regolabile", time:"8–15 min", tmin:10,
+  ing:["Broccoli o cavolfiore a cimette: 8–10 min","Carote a rondelle: 10–12 min","Fagiolini: 8–10 min","Zucchine: 6–8 min","Patate a cubetti: 15–20 min (con ≈ 720 ml)"],
+  steps:["Versa l'acqua nella Combi Pan e appoggia sopra la griglia Crisper.","Verdure sulla griglia in un solo strato; livello 1.","COMBI COOKER, Steam, imposta il tempo e avvia: il timer parte quando l'acqua bolle.","A fine uso togli tutto, chiudi lo sportello e premi START/STOP per il ciclo di asciugatura."],
+  tip:"La quantità d'acqua per Steam non è indicata nel manuale: se il display mostra ADD WATER aggiungine.", src:"stima", kw:["vapore","verdure al vapore","verdure lesse","broccoli al vapore","carote al vapore","patate al vapore"] },
+{ id:"st-uova", t:"Uova sode al vapore", m:"st", cat:"Antipasti e snack", serv:"6 uova", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:480, wn:"≈ 480 ml sotto la griglia (stima)", temp:"non regolabile", time:"7 min (morbide) · 12–14 min (sode)", tmin:13,
+  ing:["6 uova a temperatura ambiente","acqua e ghiaccio per raffreddarle"],
+  steps:["Acqua nella Combi Pan, griglia sopra, uova sulla griglia; livello 1.","COMBI COOKER, Steam, 12–14 minuti per uova sode.","Mettile subito in acqua e ghiaccio per 5 minuti: si sbucciano meglio."],
+  tip:"", src:"stima", kw:["uova sode","uova","uova al vapore","uova barzotte","uovo"] },
+{ id:"st-ravioli", t:"Ravioli cinesi o dumpling surgelati", m:"st", cat:"Antipasti e snack", serv:"4", frozen:true, est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:480, wn:"≈ 480 ml sotto la griglia (stima)", temp:"non regolabile", time:"10–12 min", tmin:11,
+  ing:["20–24 ravioli al vapore surgelati","carta forno forata o foglie di verza","salsa di soia per servire"],
+  steps:["Acqua nella Combi Pan, griglia sopra coperta di carta forno forata.","Ravioli distanziati sulla carta; livello 1.","COMBI COOKER, Steam, 10–12 minuti."],
+  tip:"Per una base croccante finisci con 3–4 minuti di Air Fry a 200 °C dopo aver tolto l'acqua.", src:"stima", kw:["ravioli cinesi","ravioli al vapore","dumpling","gyoza","bao","ravioli surgelati"] },
+{ id:"st-pesce", t:"Filetti di pesce al vapore", m:"st", cat:"Secondi di pesce", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:360, wn:"≈ 360 ml sotto la griglia (stima)", temp:"non regolabile", time:"8–10 min", tmin:9,
+  ing:["4 filetti di orata, branzino o merluzzo","limone, prezzemolo, olio a crudo"],
+  steps:["Acqua nella Combi Pan, griglia sopra con carta forno, pesce sopra; livello 1.","COMBI COOKER, Steam, 8–10 minuti secondo lo spessore.","Condisci a crudo con olio e limone."],
+  tip:"", src:"stima", kw:["pesce al vapore","orata","branzino","spigola","filetti di pesce","pesce lesso"] },
+
+/* ---------- PROVE ---------- */
+{ id:"pr-impasto", t:"Lievitazione di impasti (pane, pizza, brioche)", m:"pr", cat:"Pane e lievitati", serv:"—",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml nella Combi Pan, utili per la cottura successiva", temp:"30–35 °C", time:"40–90 min (finché raddoppia)", tmin:60,
+  ing:["Impasto in una ciotola coperta o già nello stampo"],
+  steps:["240 ml d'acqua nella Combi Pan, griglia Crisper sopra, impasto sulla griglia; livello 1.","COMBI COOKER, Prove, 35 °C (30 °C per impasti ricchi di burro), imposta il tempo.","Controlla il volume: quando è raddoppiato è pronto per la cottura."],
+  tip:"Impasti con molto burro (brioche, cornetti) meglio a 30 °C, così il burro non si scioglie.", src:"ninja", kw:["lievitare","lievitazione","impasto","far lievitare","pasta madre","prove"] },
+{ id:"pr-pizza-teglia", t:"Pizza alta in teglia", m:"pr", cat:"Pane e lievitati", serv:"6–8",
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml solo durante la lievitazione; per la cottura Bake togli l'acqua", temp:"35 °C, poi 205 °C", time:"40 min di Prove + 18 min di Bake", tmin:18,
+  ing:["450 g d'impasto per pizza","400 g di passata","225 g di mozzarella","100 g di salame piccante","1 peperone, 1 cipolla","40 g di parmigiano"],
+  steps:["Metti l'impasto in una ciotola unta. 240 ml d'acqua nella Combi Pan, griglia Crisper sopra, ciotola sulla griglia; livello 1.","COMBI COOKER, Prove, 35 °C, 40 minuti.","Togli griglia e ciotola, svuota e asciuga la Combi Pan, ungila e stendici l'impasto. Condisci con passata, mozzarella e farciture.","Combi Pan al livello 1. AIR FRY/HOB, Bake, 205 °C, 18 minuti dopo 3 minuti di preriscaldamento."],
+  tip:"", src:"ninja", kw:["pizza","pizza in teglia","pizza alta","pizza fatta in casa","impasto pizza"] },
+
+/* ---------- AIR FRY ---------- */
+{ id:"af-patatine-surg", t:"Patatine surgelate", m:"af", cat:"Surgelati", serv:"2–4", frozen:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"180 °C", time:"20–24 min (450 g) · 26–30 min (910 g)", tmin:22,
+  ing:["450–910 g di patatine surgelate, senza olio"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 180 °C. Aggiungi 5 minuti per il preriscaldamento e metti le patatine dopo i primi 5.","Scuoti a metà cottura."],
+  tip:"Patatine grosse (chunky): 500 g, 200 °C, 17 min. Spicchi surgelati: 650 g, 200 °C, 15 min.", src:"ninja", kw:["patatine surgelate","patatine fritte","patatine","french fries","chips surgelate","spicchi surgelati"] },
+{ id:"af-nuggets", t:"Nuggets, cotolette e crocchette surgelate", m:"af", cat:"Surgelati", serv:"4", frozen:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"11–13 min", tmin:12,
+  ing:["680 g di nuggets di pollo surgelati","Bastoncini di pesce 400 g: 200 °C, 9–11 min","Filetti di pesce impanati: 200 °C, 13–15 min","Crocchette di patate: 200 °C, 12–15 min (stima)","Hash brown 8 pezzi: 200 °C, 14 min"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Disponi in un solo strato e gira a metà."],
+  tip:"", src:"ninja", kw:["nuggets","crocchette","bastoncini di pesce","cotolette surgelate","impanati","sofficini","fish fingers","hash brown","cordon bleu"] },
+{ id:"af-ascolane", t:"Olive ascolane, mozzarelline e fritti surgelati", m:"af", cat:"Surgelati", serv:"4", frozen:true, est:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"190 °C", time:"10–12 min", tmin:11,
+  ing:["400–500 g di olive ascolane, mozzarelline, arancini mignon o panzerottini surgelati","un velo d'olio spray (facoltativo)"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 190 °C, +5 min di preriscaldamento.","Un solo strato, scuoti a metà. Le mozzarelline vanno tolte appena dorate."],
+  tip:"Tempi stimati: segui anche l'indicazione per friggitrice ad aria sulla confezione.", src:"stima", kw:["olive ascolane","mozzarelline","arancini","panzerotti","fritti misti","supplì","fritto"] },
+{ id:"af-hamburger", t:"Hamburger", m:"af", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"190 °C", time:"10–12 min", tmin:11,
+  ing:["4 hamburger da 115 g, spessi 2,5 cm","sale e pepe"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 190 °C, +5 min di preriscaldamento.","Gira a metà. Burger vegetali surgelati: 190 °C, 14 min."],
+  tip:"Bistecche da 230 g: 200 °C, 10–20 minuti secondo la cottura.", src:"ninja", kw:["hamburger","burger","bistecca","hamburger vegetali","svizzera"] },
+{ id:"af-ali", t:"Ali di pollo fritte ad aria", m:"af", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"24–28 min", tmin:26,
+  ing:["1 kg di ali di pollo","1 cucchiaio d'olio","spezie"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Gira a metà cottura."],
+  tip:"Con Combi Crisp restano più succose (240 ml d'acqua, 205 °C, 20–25 min).", src:"ninja", kw:["ali fritte","alette fritte","pollo fritto","drumsticks"] },
+{ id:"af-sovracosce", t:"Sovracosce disossate", m:"af", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"18–22 min", tmin:20,
+  ing:["4 sovracosce disossate da 115–230 g","olio spennellato, spezie","Con osso: 200 °C, 22–28 min","Petti disossati: 190 °C, 22–25 min"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Gira a metà e controlla i 75 °C al cuore."],
+  tip:"", src:"ninja", kw:["sovracosce disossate","cosce","pollo alla griglia"] },
+{ id:"af-broccoli-parm", t:"Broccoli croccanti al parmigiano", m:"af", cat:"Contorni", serv:"8",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"15 min", tmin:15,
+  ing:["700 g di broccoli a cimette","2 cucchiai d'olio","2 cucchiaini d'aglio in polvere","85 g di parmigiano grattugiato","1 cucchiaio d'aceto balsamico"],
+  steps:["Condisci i broccoli con olio, aglio e 45 g di parmigiano.","Griglia Crisper nella Combi Pan; livello 1. AIR FRY/HOB, Air Fry, 200 °C, 15 minuti.","Quando mancano 8 minuti mescola e aggiungi il resto del parmigiano.","Finisci con il balsamico."],
+  tip:"", src:"ninja", kw:["broccoli al parmigiano","broccoli croccanti","verdure croccanti"] },
+{ id:"af-verdure", t:"Verdure ad aria (zucchine, funghi, peperoni, fagiolini)", m:"af", cat:"Contorni", serv:"4",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"7–30 min secondo la verdura", tmin:10,
+  ing:["Zucchine 680 g: 200 °C, 10–15 min","Funghi 230 g: 200 °C, 7–8 min","Fagiolini 340 g: 200 °C, 7–10 min","Asparagi 1 mazzo: 200 °C, 8–10 min","Peperoni interi 4: 205 °C, 25–30 min","Pannocchie 6: 200 °C, 12–15 min","Chips di cavolo nero: 150 °C, 9–11 min","1 cucchiaio d'olio per le verdure a pezzi"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, temperatura dalla lista, +5 min di preriscaldamento.","Mescola spesso."],
+  tip:"", src:"ninja", kw:["zucchine","funghi","peperoni","fagiolini","asparagi","pannocchie","cavolo nero","melanzane","verdure grigliate"] },
+{ id:"af-gamberi", t:"Gamberi con il guscio", m:"af", cat:"Secondi di pesce", serv:"4",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"7–9 min", tmin:8,
+  ing:["450 g di gamberi crudi con il guscio","1 cucchiaio d'olio, aglio, prezzemolo"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Mescola a metà."],
+  tip:"Polpette di pesce: 175 °C, 10–13 min. Filetti di salmone da 115 g: 200 °C, 10–13 min.", src:"ninja", kw:["gamberi","scampi","mazzancolle","gamberetti"] },
+{ id:"af-patate-intere", t:"Patate dolci o patate intere", m:"af", cat:"Contorni", serv:"4–6",
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"35–40 min", tmin:38,
+  ing:["4–6 patate da 170–230 g, bucherellate","Patate dolci a pezzi 910 g: 200 °C, 15–20 min"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Girale a metà."],
+  tip:"", src:"ninja", kw:["patate dolci","patata americana","patate intere ad aria"] },
+
+/* ---------- BAKE ---------- */
+{ id:"bk-mac", t:"Pasta al forno ai tre formaggi", m:"bk", cat:"Primi", serv:"6–8",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua nel vano (l'acqua è nella ricetta)", temp:"200 °C", time:"20 min + 4 min di Grill", tmin:20,
+  ing:["500 g di maccheroni","1 litro di latte intero","500 ml d'acqua","200 g di cheddar o fontina","200 g di formaggio a pasta semidura","200 g di mozzarella","56 g di burro fuso","60 g di pangrattato panko"],
+  steps:["Nella Combi Pan mescola pasta cruda, latte, acqua e i formaggi (tieni da parte un po' di mozzarella).","Combi Pan al livello 1. AIR FRY/HOB, Bake, 200 °C, 20 minuti dopo 3 minuti di preriscaldamento; mescola a metà.","Copri con mozzarella e pangrattato al burro.","Grill per 4 minuti."],
+  tip:"", src:"ninja", kw:["pasta al forno","maccheroni","mac and cheese","pasta gratinata","pasta ai formaggi"] },
+{ id:"bk-lasagne", t:"Lasagne ricotta e spinaci", m:"bk", cat:"Primi", serv:"6–8",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"185 °C", time:"18 min", tmin:18,
+  ing:["750 g di ricotta","250 g di mozzarella","175 g di parmigiano","1 uovo","375 g di spinaci","un pizzico di noce moscata","680 g di sugo di pomodoro","circa 12 sfoglie di lasagna"],
+  steps:["Mescola ricotta, uovo, spinaci, noce moscata e metà parmigiano.","Nella Combi Pan alterna sugo, sfoglie e crema di ricotta; finisci con sugo, mozzarella e parmigiano.","Combi Pan al livello 1. AIR FRY/HOB, Bake, 185 °C, 18 minuti.","Lascia riposare 10 minuti prima di tagliare."],
+  tip:"Per le lasagne al ragù stesse impostazioni con sfoglie precotte.", src:"ninja", kw:["lasagne","lasagna","pasticcio","lasagne al ragù","cannelloni"] },
+{ id:"bk-parmigiana", t:"Parmigiana di melanzane", m:"bk", cat:"Secondi vegetariani", serv:"6",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"180 °C", time:"30–35 min", tmin:32,
+  ing:["3 melanzane a fette","700 g di passata","300 g di mozzarella ben scolata","100 g di parmigiano","basilico, olio, sale"],
+  steps:["Cuoci le fette di melanzana con Air Fry a 200 °C per 10–12 minuti, unte d'olio, in più infornate.","Nella Combi Pan alterna passata, melanzane, mozzarella, parmigiano e basilico.","Combi Pan al livello 1. AIR FRY/HOB, Bake, 180 °C, 30–35 minuti.","Fai riposare almeno 15 minuti."],
+  tip:"", src:"adattata", kw:["parmigiana","melanzane alla parmigiana","melanzane"] },
+{ id:"bk-pie", t:"Pasticcio di pollo e porri in crosta", m:"bk", cat:"Secondi di carne", serv:"6–8",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"Sear/Sauté HI, poi Bake 180 °C", time:"circa 11 min sul fuoco + 15 min di forno", tmin:15,
+  ing:["56 g di burro","1 cipolla, 1 porro, 125 g di carote, 125 g di piselli","2 cucchiai di prezzemolo, 1 cucchiaino di timo","30 g di farina","475 ml di brodo","180 ml di panna","970 g di pollo cotto a pezzi","320 g di pasta sfoglia","1 uovo"],
+  steps:["Combi Pan al livello 1, sportello aperto: AIR FRY/HOB, Sear/Sauté HI, 3 minuti di preriscaldamento con il burro.","Rosola le verdure 5 minuti, aggiungi farina 1 minuto, poi brodo e panna e fai sobbollire 5 minuti.","Unisci pollo ed erbe, copri con la sfoglia, incidila e spennella con l'uovo.","Chiudi lo sportello. Bake, 180 °C, 15 minuti dopo 3 minuti di preriscaldamento."],
+  tip:"", src:"ninja", kw:["pasticcio","pie","torta salata","pollo e porri","sfoglia salata","quiche"] },
+{ id:"bk-biscotti", t:"Biscotti di frolla", m:"bk", cat:"Dolci", serv:"20 biscotti",
+  d:{l1:"tray",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"170 °C", time:"10–12 min", tmin:11,
+  ing:["250 g di farina","100 g di zucchero","125 g di burro freddo","1 uovo","scorza di limone, un pizzico di sale"],
+  steps:["Impasta velocemente e fai riposare la frolla 30 minuti in frigo.","Stendi, taglia i biscotti e mettili sul Bake Tray con carta forno (il Bake Tray non è antiaderente).","Bake Tray al livello 1. AIR FRY/HOB, Bake, 170 °C, 10–12 minuti dopo 3 minuti di preriscaldamento.","Falli raffreddare sul vassoio."],
+  tip:"Crostata: stessa temperatura, 25–30 minuti, in uno stampo che entri nel vano.", src:"adattata", kw:["biscotti","frolla","pasta frolla","crostata","cookies"] },
+{ id:"bk-pizza-surg", t:"Pizza surgelata", m:"bk", cat:"Surgelati", serv:"1–2", frozen:true, est:true,
+  d:{l1:"tray",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"10–14 min", tmin:12,
+  ing:["1 pizza surgelata fino a circa 25 cm"],
+  steps:["Pizza ancora surgelata sul Bake Tray al livello 1.","AIR FRY/HOB, Bake, 200 °C, dopo 3 minuti di preriscaldamento.","Controlla dopo 10 minuti: è pronta quando il bordo è dorato e il formaggio fila."],
+  tip:"Il Bake Tray contiene una pizza da circa 25 cm.", src:"stima", kw:["pizza surgelata","pizza congelata","pizza pronta"] },
+
+/* ---------- GRILL ---------- */
+{ id:"gr-bruschette", t:"Bruschette e toast", m:"gr", cat:"Antipasti e snack", serv:"4",
+  d:{l1:null,l2:"tray",w:false}, water:0, wn:"Niente acqua", temp:"Grill", time:"3–5 min", tmin:4,
+  ing:["8 fette di pane casereccio","olio, aglio, pomodorini"],
+  steps:["Fette di pane sul Bake Tray al livello 2.","AIR FRY/HOB, Grill, 3–5 minuti, girando a metà.","Strofina l'aglio e condisci."],
+  tip:"Toast farciti: 5–6 minuti, girando a metà.", src:"stima", kw:["bruschette","bruschetta","toast","pane tostato","crostini"] },
+{ id:"gr-gratin", t:"Gratinare (pasta, verdure, patate)", m:"gr", cat:"Antipasti e snack", serv:"—",
+  d:{l1:null,l2:"tray",w:false}, water:0, wn:"Niente acqua", temp:"Grill", time:"4–10 min", tmin:5,
+  ing:["Piatto già cotto con formaggio o pangrattato in superficie"],
+  steps:["Piatto sul Bake Tray al livello 2 (o Combi Pan al livello 1 se il piatto è alto).","AIR FRY/HOB, Grill, 4 minuti per la pasta, fino a 10 minuti per le patate ripiene.","Controlla spesso: il grill scurisce in pochi secondi."],
+  tip:"", src:"ninja", kw:["gratinare","gratin","crosticina","gratinato","formaggio fuso"] },
+{ id:"gr-verdure", t:"Verdure alla griglia a fette", m:"gr", cat:"Contorni", serv:"4", est:true,
+  d:{l1:null,l2:"tray",w:false}, water:0, wn:"Niente acqua", temp:"Grill", time:"8–12 min", tmin:10,
+  ing:["2 zucchine e 1 melanzana a fette di 5 mm","olio, sale, menta"],
+  steps:["Fette unte d'olio sul Bake Tray al livello 2.","AIR FRY/HOB, Grill, 8–12 minuti, girando a metà."],
+  tip:"", src:"stima", kw:["verdure alla griglia","grigliata di verdure","melanzane grigliate","zucchine grigliate"] },
+
+/* ---------- REHEAT ---------- */
+{ id:"rh-pizza", t:"Riscaldare pizza e focaccia", m:"rh", cat:"Avanzi", serv:"—", est:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"≈ 160 °C", time:"5–8 min", tmin:6,
+  ing:["Tranci di pizza o focaccia avanzati"],
+  steps:["Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Reheat, circa 160 °C, 5–8 minuti."],
+  tip:"Cornetti già cotti o pane del giorno prima: 150–160 °C per 3–5 minuti.", src:"stima", kw:["riscaldare pizza","pizza avanzata","riscaldare","cornetti cotti","rigenerare","pane raffermo","scaldare"] },
+{ id:"rh-pasta", t:"Riscaldare pasta al forno e lasagne", m:"rh", cat:"Avanzi", serv:"—", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua nel vano; un cucchiaio d'acqua o latte sul piatto se è asciutto", temp:"≈ 160 °C", time:"12–15 min", tmin:13,
+  ing:["Porzioni avanzate di pasta al forno, lasagne o parmigiana"],
+  steps:["Metti le porzioni nella Combi Pan e coprile con alluminio; livello 1.","AIR FRY/HOB, Reheat, circa 160 °C, 12–15 minuti.","Togli l'alluminio negli ultimi 3 minuti se vuoi la crosticina."],
+  tip:"", src:"stima", kw:["riscaldare lasagne","avanzi","pasta avanzata","riscaldare pasta","scaldare avanzi"] },
+
+/* ---------- SLOW COOK ---------- */
+{ id:"sc-ragu", t:"Ragù alla bolognese a cottura lenta", m:"sc", cat:"Primi", serv:"10",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua: bastano pomodoro e latte della ricetta", temp:"Sear/Sauté HI, poi Slow Cook HI", time:"circa 14 min di rosolatura + 4 h", tmin:240,
+  ing:["2 cucchiai d'olio d'oliva","1 cipolla, 2 coste di sedano, 2 carote, 3 spicchi d'aglio tritati","2 cucchiai di concentrato di pomodoro","1 kg di macinato di manzo","1 cucchiaio d'erbe italiane","2 lattine di pomodori pelati da 400 g","180 ml di latte intero","sale e pepe"],
+  steps:["Combi Pan al livello 1, sportello aperto: AIR FRY/HOB, Sear/Sauté HI, preriscalda 2 minuti con l'olio.","Soffriggi le verdure 6 minuti, il concentrato 1 minuto, poi la carne circa 5 minuti.","Aggiungi pelati, latte, erbe, sale e pepe. Chiudi lo sportello.","Slow Cook HI per 4 ore (oppure LO per 6–8 ore)."],
+  tip:"", src:"ninja", kw:["ragu","ragù","bolognese","sugo di carne","ragù alla bolognese"] },
+{ id:"sc-spezzatino", t:"Spezzatino di manzo con patate", m:"sc", cat:"Secondi di carne", serv:"6", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua nel vano: 400 ml di brodo nella ricetta", temp:"Sear/Sauté HI, poi Slow Cook LO o HI", time:"LO 7–8 h · HI 4–5 h", tmin:270,
+  ing:["1 kg di spalla di manzo a cubi","2 cucchiai di farina","2 cucchiai d'olio","1 cipolla, 2 carote, 1 costa di sedano","150 ml di vino rosso","400 ml di brodo","2 cucchiai di concentrato","600 g di patate a pezzi","alloro, rosmarino"],
+  steps:["Infarina la carne. Sear/Sauté HI a sportello aperto: rosolala in due volte.","Aggiungi verdure, sfuma col vino, poi brodo, concentrato, erbe e patate.","Chiudi lo sportello. Slow Cook LO 7–8 ore o HI 4–5 ore.","Se il sugo è troppo liquido: Sear/Sauté a sportello aperto qualche minuto."],
+  tip:"", src:"stima", kw:["spezzatino","stracotto","stufato","brasato","bocconcini","gulasch","goulash","cottura lenta"] },
+{ id:"sc-legumi", t:"Zuppa di legumi o chili", m:"sc", cat:"Primi", serv:"6", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua nel vano: 1 litro di brodo nella ricetta", temp:"Slow Cook LO o HI", time:"LO 6–8 h · HI 4 h", tmin:240,
+  ing:["3 lattine di legumi misti scolati (o 400 g secchi ammollati)","1 litro di brodo","400 g di pomodori pelati","soffritto di cipolla, carota e sedano","rosmarino, peperoncino"],
+  steps:["Fai il soffritto con Sear/Sauté a sportello aperto.","Aggiungi legumi, brodo e pomodoro. Chiudi lo sportello.","Slow Cook LO 6–8 ore o HI 4 ore."],
+  tip:"Con legumi secchi ammollati scegli LO 8 ore.", src:"stima", kw:["zuppa","legumi","fagioli","ceci","lenticchie","chili","minestrone","minestra"] },
+
+/* ---------- SEAR/SAUTÉ ---------- */
+{ id:"ss-soffritto", t:"Soffritto e rosolatura della carne", m:"ss", cat:"Basi", serv:"—",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"livello 3 per il soffritto, Hi5 per la carne", time:"3–8 min", tmin:5,
+  ing:["Olio o burro","cipolla, carota, sedano tritati","oppure carne a pezzi asciugata"],
+  steps:["Combi Pan al livello 1, sportello APERTO.","AIR FRY/HOB, Sear/Sauté: livello 3 per il soffritto, Hi5 per rosolare. Preriscalda 2–3 minuti.","Mescola con utensili non metallici."],
+  tip:"Il display conta in avanti: ti dice da quanto stai cuocendo.", src:"ninja", kw:["soffritto","rosolare","sauté","saltare","rosolatura","scottare"] },
+{ id:"ss-funghi", t:"Funghi trifolati", m:"ss", cat:"Contorni", serv:"4", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"livello 4", time:"8–10 min", tmin:9,
+  ing:["500 g di champignon a fette","2 cucchiai d'olio","1 spicchio d'aglio","prezzemolo, sale"],
+  steps:["Combi Pan al livello 1, sportello aperto. Sear/Sauté livello 4, preriscalda con olio e aglio 2 minuti.","Aggiungi i funghi e cuoci 8–10 minuti mescolando finché l'acqua evapora.","Sala alla fine e aggiungi il prezzemolo."],
+  tip:"", src:"stima", kw:["funghi trifolati","funghi in padella","verdure in padella","saltare verdure"] },
+{ id:"ss-ridurre", t:"Ridurre un sugo o asciugare il liquido in eccesso", m:"ss", cat:"Basi", serv:"—",
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"livello 4 o Hi5", time:"2–10 min", tmin:5,
+  ing:["Riso, risotto o sugo con troppo liquido"],
+  steps:["Lascia la Combi Pan al livello 1 e apri lo sportello.","AIR FRY/HOB, Sear/Sauté livello 4 o Hi5.","Mescola finché il liquido si assorbe."],
+  tip:"È il metodo consigliato da Ninja quando dopo Rice/Pasta o Combi Meals resta liquido.", src:"ninja", kw:["ridurre","addensare","troppo liquido","asciugare","sugo liquido"] },
+/* ---------- AGGIUNTE (stime e adattamenti) ---------- */
+{ id:"cc-pollo-patate", t:"Pollo e patate al forno", m:"cc", cat:"Secondi di carne", serv:"4",
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"205 °C", time:"22–25 min (+ vapore iniziale)", tmin:24,
+  ing:["800 g di fusi e sovracosce di pollo con osso","600 g di patate a spicchi","2 cucchiai d'olio","rosmarino, aglio, sale, pepe, paprika"],
+  steps:["Versa 240 ml d'acqua nella Combi Pan e inseriscila al livello 1.","Condisci pollo e patate con olio e aromi e distribuiscili in un solo strato sul Bake Tray, pollo con la pelle in su.","Bake Tray al livello 2. COMBI COOKER, Combi Crisp, 205 °C, 22–25 minuti.","Gira le patate a metà cottura. Il pollo deve arrivare a 75 °C vicino all'osso."],
+  tip:"Se le patate sono pronte prima, toglile e lascia finire il pollo.", src:"adattata", kw:["pollo e patate","pollo con patate","patate e pollo","cosce e patate","pollo al forno con patate"] },
+{ id:"cc-salsiccia-patate", t:"Salsiccia e patate", m:"cc", cat:"Secondi di carne", serv:"4", est:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"205 °C", time:"20–25 min", tmin:22,
+  ing:["600 g di salsiccia a pezzi","600 g di patate a spicchi","1 cucchiaio d'olio","rosmarino, sale"],
+  steps:["240 ml d'acqua nella Combi Pan al livello 1.","Patate condite e salsiccia sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 205 °C, 20–25 minuti, girando a metà."],
+  tip:"", src:"stima", kw:["salsiccia e patate","salsicce","salsiccia","wurstel"] },
+{ id:"cc-polpettone", t:"Polpettone", m:"cc", cat:"Secondi di carne", serv:"6", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml sotto la griglia", temp:"180 °C", time:"35–40 min", tmin:38,
+  ing:["800 g di macinato misto","2 uova","80 g di pane ammollato nel latte","60 g di parmigiano","prezzemolo, sale, noce moscata","olio"],
+  steps:["Impasta e forma un filone di circa 8 cm di diametro. Avvolgilo in carta forno bucherellata sotto.","240 ml d'acqua nella Combi Pan, griglia Crisper sopra, polpettone sulla griglia; livello 1.","COMBI COOKER, Combi Crisp, 180 °C, 35–40 minuti.","Al cuore deve arrivare a 70 °C. Fai riposare 10 minuti prima di affettare."],
+  tip:"", src:"stima", kw:["polpettone","rotolo di carne","hamburgerone"] },
+{ id:"cc-orata", t:"Orata o branzino al forno", m:"cc", cat:"Secondi di pesce", serv:"2–3", est:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml (proteine fresche)", temp:"200 °C", time:"15–18 min", tmin:16,
+  ing:["2 orate o branzini da 350–400 g puliti","limone, prezzemolo, aglio","olio, sale"],
+  steps:["240 ml d'acqua nella Combi Pan al livello 1.","Pesce farcito con limone ed erbe, unto e salato, sul Bake Tray con carta forno; livello 2.","COMBI COOKER, Combi Crisp, 200 °C, 15–18 minuti.","È pronto quando la carne si stacca facilmente dalla lisca."],
+  tip:"Al cartoccio: chiudi il pesce nella carta forno e usa Combi Bake a 190 °C per 15 minuti con 240 ml d'acqua.", src:"stima", kw:["orata","branzino","spigola","pesce intero","pesce al forno","cartoccio"] },
+{ id:"cc-peperoni-ripieni", t:"Peperoni ripieni", m:"cc", cat:"Secondi vegetariani", serv:"4", est:true,
+  d:{l1:"pan",l2:"tray",w:true}, water:240, wn:"240 ml", temp:"190 °C", time:"25–30 min", tmin:28,
+  ing:["4 peperoni tagliati a metà nel senso della lunghezza","300 g di macinato o 250 g di riso cotto","pangrattato, parmigiano, uovo, prezzemolo","olio"],
+  steps:["Riempi le mezze falde, cospargi di pangrattato e olio.","240 ml d'acqua nella Combi Pan al livello 1, peperoni sul Bake Tray al livello 2.","COMBI COOKER, Combi Crisp, 190 °C, 25–30 minuti."],
+  tip:"Tieni i peperoni bassi (mezze falde): al livello 2 lo spazio in altezza è limitato.", src:"stima", kw:["peperoni ripieni","verdure ripiene","zucchine ripiene","pomodori ripieni","ripieni"] },
+{ id:"bk-souffle-formaggio", t:"Soufflé al formaggio", m:"bk", cat:"Antipasti e snack", serv:"4 cocotte", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"180 °C", time:"18–22 min", tmin:20,
+  ing:["30 g di burro + burro e pangrattato per le cocotte","30 g di farina","250 ml di latte","100 g di groviera o parmigiano grattugiati","3 tuorli e 4 albumi","sale, pepe, noce moscata"],
+  steps:["Fai una besciamella densa con burro, farina e latte; fuori dal fuoco aggiungi formaggio e tuorli.","Monta gli albumi a neve ferma e incorporali delicatamente in tre volte.","Riempi fino a 1 cm dal bordo 4 cocotte imburrate e passate nel pangrattato; passa il pollice lungo il bordo.","AIR FRY/HOB, Bake, 180 °C: preriscalda 3 minuti con la Combi Pan vuota al livello 1, poi appoggia le cocotte nella Combi Pan.","Cuoci 18–22 minuti senza aprire lo sportello: guarda dal vetro con la luce. Servi subito."],
+  tip:"La Combi Pan ha le pareti alte e ripara le cocotte dall'aria diretta, così il soufflé cresce dritto. La prima volta controlla dal vetro a 16 minuti.", src:"stima", kw:["souffle","soufflé","souffle al formaggio","sformatino","soffiato"] },
+{ id:"bk-souffle-cioccolato", t:"Soufflé al cioccolato", m:"bk", cat:"Dolci", serv:"4 cocotte", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"190 °C", time:"12–14 min", tmin:13,
+  ing:["100 g di cioccolato fondente","40 g di burro","3 tuorli e 4 albumi","60 g di zucchero","burro e zucchero per le cocotte","zucchero a velo"],
+  steps:["Sciogli cioccolato e burro, unisci i tuorli.","Monta gli albumi con lo zucchero a neve lucida e incorporali in tre volte.","Riempi 4 cocotte imburrate e zuccherate fino al bordo e livella.","AIR FRY/HOB, Bake, 190 °C: preriscalda 3 minuti con la Combi Pan vuota al livello 1, poi metti le cocotte nella Combi Pan.","Cuoci 12–14 minuti senza aprire. Spolvera di zucchero a velo e servi subito."],
+  tip:"", src:"stima", kw:["souffle al cioccolato","soufflé al cioccolato","souffle dolce","souffle","soufflé"] },
+{ id:"bk-tortino", t:"Tortino al cioccolato con cuore morbido", m:"bk", cat:"Dolci", serv:"4", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"9–10 min", tmin:9,
+  ing:["120 g di cioccolato fondente","100 g di burro","2 uova + 2 tuorli","60 g di zucchero","30 g di farina","burro e cacao per gli stampini"],
+  steps:["Sciogli cioccolato e burro. Monta uova, tuorli e zucchero, unisci il cioccolato e poi la farina.","Versa in 4 stampini imburrati e passati nel cacao.","AIR FRY/HOB, Bake, 200 °C: preriscalda 3 minuti con la Combi Pan vuota al livello 1, poi metti gli stampini nella Combi Pan.","Cuoci 9–10 minuti: i bordi devono essere sodi e il centro ancora morbido. Sforma dopo 1 minuto."],
+  tip:"Puoi preparare gli stampini in anticipo e tenerli in frigo: in quel caso aggiungi 2 minuti.", src:"stima", kw:["tortino","cuore caldo","cuore morbido","lava cake","fondant","tortino al cioccolato"] },
+{ id:"cb-sformato", t:"Sformato o flan di verdure", m:"cb", cat:"Secondi vegetariani", serv:"6 stampini", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml sotto la griglia (come un bagnomaria)", temp:"160 °C", time:"20–25 min (+ vapore iniziale)", tmin:22,
+  ing:["400 g di verdure cotte e frullate (spinaci, zucca, carote)","2 uova","150 ml di panna o latte","50 g di parmigiano","sale, noce moscata"],
+  steps:["Mescola tutto e versa in 6 stampini imburrati.","240 ml d'acqua nella Combi Pan, griglia Crisper sopra, stampini sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 160 °C, 20–25 minuti. Sono pronti quando il centro è rappreso.","Lascia intiepidire 5 minuti e sforma."],
+  tip:"Crème caramel e budini al forno: stessa impostazione a 150 °C per 20–25 minuti.", src:"stima", kw:["sformato","flan","sformatini","crème caramel","creme caramel","budino al forno","bagnomaria","creme brulee"] },
+{ id:"cb-pandispagna", t:"Pan di Spagna", m:"cb", cat:"Dolci", serv:"8", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml (cottura oltre 15 min)", temp:"165 °C", time:"22–25 min (+ circa 20 min di vapore)", tmin:23,
+  ing:["4 uova a temperatura ambiente","120 g di zucchero","120 g di farina 00 setacciata","scorza di limone, un pizzico di sale"],
+  steps:["Monta uova e zucchero per almeno 10 minuti, finché scrivono. Incorpora la farina a mano, poco alla volta.","Versa in una tortiera da 20 cm foderata.","240 ml d'acqua nella Combi Pan, griglia sopra, tortiera sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 165 °C, 22–25 minuti. Non aprire prima di 18 minuti; prova lo stecchino."],
+  tip:"", src:"stima", kw:["pan di spagna","pandispagna","base per torta","torta farcita","torta di compleanno"] },
+{ id:"bk-brownies", t:"Brownies", m:"bk", cat:"Dolci", serv:"12 quadrotti", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"175 °C", time:"20–22 min", tmin:21,
+  ing:["200 g di cioccolato fondente","150 g di burro","200 g di zucchero","3 uova","100 g di farina","noci a piacere"],
+  steps:["Sciogli cioccolato e burro, unisci zucchero, uova e farina.","Fodera la Combi Pan con carta forno e versaci l'impasto; livello 1.","AIR FRY/HOB, Bake, 175 °C, 20–22 minuti dopo 3 minuti di preriscaldamento. Lo stecchino deve uscire umido.","Taglia quando è freddo."],
+  tip:"", src:"stima", kw:["brownies","brownie","dolce al cioccolato","torta al cioccolato","torta tenerina"] },
+{ id:"bk-crostata", t:"Crostata di marmellata", m:"bk", cat:"Dolci", serv:"8", est:true,
+  d:{l1:"tray",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"170 °C", time:"25–30 min", tmin:28,
+  ing:["300 g di pasta frolla","350 g di marmellata","uovo per spennellare"],
+  steps:["Stendi la frolla in una tortiera da 22 cm, riempi di marmellata e fai le strisce.","Tortiera sul Bake Tray al livello 1.","AIR FRY/HOB, Bake, 170 °C, 25–30 minuti dopo 3 minuti di preriscaldamento.","Se la superficie scurisce troppo, coprila con un foglio di alluminio."],
+  tip:"", src:"stima", kw:["crostata","crostata di marmellata","torta di frolla","crostata alla frutta"] },
+{ id:"bk-frittata", t:"Frittata al forno", m:"bk", cat:"Secondi vegetariani", serv:"4", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"170 °C", time:"15–18 min", tmin:16,
+  ing:["8 uova","60 g di parmigiano","300 g di verdure cotte (zucchine, spinaci, cipolle)","sale, pepe, olio"],
+  steps:["Sbatti le uova con parmigiano, sale e pepe e unisci le verdure.","Ungi bene la Combi Pan o foderala di carta forno e versaci il composto; livello 1.","AIR FRY/HOB, Bake, 170 °C, 15–18 minuti dopo 3 minuti di preriscaldamento, finché il centro è rappreso."],
+  tip:"Per la crosticina finisci con 2 minuti di Grill.", src:"stima", kw:["frittata","frittata al forno","tortilla","uova al forno","quiche senza pasta"] },
+{ id:"bk-gnocchi", t:"Gnocchi alla sorrentina", m:"bk", cat:"Primi", serv:"4", est:true,
+  d:{l1:"pan",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"10–12 min", tmin:11,
+  ing:["800 g di gnocchi di patate","500 g di sugo di pomodoro e basilico","250 g di mozzarella a cubetti ben scolata","50 g di parmigiano"],
+  steps:["Lessa gli gnocchi e scolali appena salgono a galla.","Nella Combi Pan mescola gnocchi, sugo e metà mozzarella; copri con il resto e il parmigiano; livello 1.","AIR FRY/HOB, Bake, 200 °C, 10–12 minuti dopo 3 minuti di preriscaldamento.","Se vuoi più crosticina, 2 minuti di Grill."],
+  tip:"", src:"stima", kw:["gnocchi","gnocchi alla sorrentina","gnocchi al forno","pasta al forno con mozzarella"] },
+{ id:"af-cotoletta", t:"Cotoletta impanata fresca", m:"af", cat:"Secondi di carne", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"10–12 min", tmin:11,
+  ing:["4 fettine di pollo o vitello battute","2 uova, pangrattato, sale","olio spray"],
+  steps:["Impana le fettine (uovo e pangrattato) e spruzzale d'olio su entrambi i lati.","Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento.","Gira a metà cottura."],
+  tip:"Cotolette surgelate: vedi «Nuggets, cotolette e crocchette surgelate».", src:"stima", kw:["cotoletta","cotolette","milanese","cotoletta alla milanese","fettine impanate","pollo impanato"] },
+{ id:"af-castagne", t:"Caldarroste", m:"af", cat:"Antipasti e snack", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"15–20 min", tmin:18,
+  ing:["500 g di castagne"],
+  steps:["Incidi le castagne sul lato bombato e lasciale in ammollo 30 minuti; asciugale.","Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento, scuotendo ogni 5 minuti.","Avvolgile in un canovaccio per 5 minuti: si sbucciano meglio."],
+  tip:"", src:"stima", kw:["castagne","caldarroste","marroni"] },
+{ id:"af-ceci", t:"Ceci croccanti", m:"af", cat:"Antipasti e snack", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:false}, water:0, wn:"Niente acqua", temp:"200 °C", time:"15–18 min", tmin:16,
+  ing:["2 lattine di ceci scolati e ben asciugati","1 cucchiaio d'olio","paprika, sale, rosmarino"],
+  steps:["Condisci i ceci.","Griglia Crisper nella Combi Pan; livello 1.","AIR FRY/HOB, Air Fry, 200 °C, +5 min di preriscaldamento, scuotendo spesso."],
+  tip:"", src:"stima", kw:["ceci croccanti","snack","aperitivo","frutta secca tostata","mandorle tostate"] },
+{ id:"cb-mele", t:"Mele cotte al forno", m:"cb", cat:"Dolci", serv:"4", est:true,
+  d:{l1:"pan-crisper",l2:null,w:true}, water:240, wn:"240 ml sotto la griglia", temp:"170 °C", time:"20 min (+ vapore iniziale)", tmin:20,
+  ing:["4 mele svuotate del torsolo","zucchero di canna, cannella, burro","uvetta o noci a piacere"],
+  steps:["Riempi le mele con zucchero, cannella, un fiocco di burro e uvetta.","240 ml d'acqua nella Combi Pan, griglia sopra, mele in una pirofila bassa sulla griglia; livello 1.","COMBI COOKER, Combi Bake, 170 °C, 20 minuti, finché sono morbide."],
+  tip:"Pere cotte: stessa impostazione.", src:"stima", kw:["mele cotte","mele al forno","pere cotte","frutta cotta"] }
+];
+
+/* Sinonimi per l'assistente */
+const SYN = [
+  ["croissant","cornetto"],["croissants","cornetti"],["brioches","cornetti"],
+  ["congelat","surgelat"],["frozen","surgelat"],["precott","gia cott"],
+  ["patate fritte","patatine"],["chips","patatine"],["pollo arrosto","pollo intero"]
+];
+const FROZEN_WORDS = ["surgelat","congelat","frozen","dal freezer","dal congelatore"];
+const COOKED_WORDS = ["gia cott","precott","da scaldare","da riscaldare","avanz","del giorno prima","raffermo","rigenerare"];
+
+</script>
+<script>
+"use strict";
+const STANDALONE = window.STANDALONE === true;
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const SIDE = { combi: "COMBI COOKER", air: "AIR FRY/HOB" };
+const SRC = { ninja: "Dal ricettario Ninja", adattata: "Ricetta adattata", stima: "Valori stimati, controlla la cottura", claude: STANDALONE ? "Consiglio dell'AI" : "Consiglio di Claude", mia: "Ricetta mia" };
+const BY_ID = Object.fromEntries(R.map((r) => [r.id, r]));
+
+/* ================= Motore dell'assistente ================= */
+function norm(s) {
+  let t = " " + String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim() + " ";
+  for (const [a, b] of SYN) t = t.split(" " + a).join(" " + b);
+  return t;
+}
+const stemWord = (w) => (w.length > 4 ? w.replace(/[aeiou]$/, "") : w);
+const stem = (s) => " " + norm(s).trim().split(" ").map(stemWord).join(" ") + " ";
+const hasAny = (q, list) => list.some((w) => q.includes(" " + w) || q.includes(w));
+
+const GENERIC = new Set(["surgelat","surgelati","fresch","fresco","crud","cott","intere","inter","fatt","forno","casa","croccant","croccanti","stile","perlato","schema","secondo"].map(stemWord));
+const INDEX = R.map((r) => {
+  const seen = new Set();
+  const kw = [];
+  r.kw.forEach((k, i) => { const s = stem(k); if (!seen.has(s)) { seen.add(s); kw.push({ k: s, multi: k.trim().includes(" "), first: i === 0 }); } });
+  return { r, kw, title: [...new Set(norm(r.t).trim().split(" ").filter((w) => w.length >= 5).map(stemWord))].filter((w) => !GENERIC.has(w)) };
+});
+
+function suggest(text) {
+  const q = norm(text), qs = stem(text);
+  const frozen = hasAny(q, FROZEN_WORDS);
+  const cooked = hasAny(q, COOKED_WORDS);
+  const scored = INDEX.map(({ r, kw, title }) => {
+    let s = 0, hit = false;
+    for (const { k, multi, first } of kw) {
+      if (qs.includes(k)) { s += (multi ? 6 : (k.trim().length >= 6 ? 4 : 3)) + (first ? 2 : 0); hit = true; }
+    }
+    for (const w of title) if (qs.includes(" " + w + " ")) s += 1;
+    if (hit) {
+      if (frozen) s += r.frozen ? 3 : -1;
+      else if (r.frozen) s -= 1;
+      if (cooked) s += r.m === "rh" ? 6 : -1;
+    }
+    return { r, s };
+  }).filter((x) => x.s >= 2).sort((a, b) => b.s - a.s);
+  return { list: scored.map((x) => x.r), frozen, cooked };
+}
+
+/* ================= Icone ================= */
+const ICON = {
+  temp: '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="17" r="1.8" fill="currentColor"/><\/svg>',
+  time: '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><\/svg>',
+  water: '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c3 4 6 7.2 6 10.5a6 6 0 0 1-12 0c0-3.3 3-6.5 6-10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><\/svg>',
+  check: '<svg class="i ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><\/svg>'
+};
+
+/* ================= Disegno accessori ================= */
+const L1_NAME = { pan: "Combi Pan", "pan-crisper": "Combi Pan + griglia", tray: "Bake Tray" };
+function diagram(d) {
+  const lab2 = d.l2 === "tray" ? "Bake Tray" : "libero";
+  const lab1 = L1_NAME[d.l1] || "libero";
+  let g = `<svg viewBox="0 0 340 190" role="img" aria-label="Livello 2: ${esc(lab2)}. Livello 1: ${esc(lab1)}${d.w ? ", con acqua" : ""}.">`;
+  g += `<rect class="svg-oven" x="6" y="6" width="200" height="176" rx="14"/>`;
+  g += `<line class="svg-level" x1="16" x2="196" y1="76" y2="76"/><line class="svg-level" x1="16" x2="196" y1="158" y2="158"/>`;
+  g += `<text class="svg-lab" x="220" y="70">Livello 2<\/text><text class="svg-sub" x="220" y="86">${esc(lab2)}<\/text>`;
+  g += `<text class="svg-lab" x="220" y="150">Livello 1<\/text><text class="svg-sub" x="220" y="166">${esc(lab1)}<\/text>`;
+  if (d.l2 === "tray") g += `<rect class="svg-tray" x="26" y="70" width="160" height="8" rx="3"/>`;
+  else g += `<text class="svg-empty" x="106" y="68" text-anchor="middle">libero<\/text>`;
+  if (d.l1 === "pan" || d.l1 === "pan-crisper") {
+    g += `<path class="svg-pan" d="M26 110 L32 158 L180 158 L186 110"/>`;
+    if (d.w) g += `<path class="svg-water" d="M31 142 q12 -6 24 0 t24 0 t24 0 t24 0 t24 0 t24 0 L181 156 L31 156 Z"/>`;
+    if (d.l1 === "pan-crisper") g += `<line class="svg-crisper" x1="34" x2="178" y1="128" y2="128"/>`;
+  } else if (d.l1 === "tray") g += `<rect class="svg-tray" x="26" y="152" width="160" height="8" rx="3"/>`;
+  else g += `<text class="svg-empty" x="106" y="150" text-anchor="middle">libero<\/text>`;
+  return g + `<\/svg>`;
+}
+function accText(d) {
+  const parts = [];
+  if (d.l1) parts.push(L1_NAME[d.l1] + " al livello 1");
+  if (d.l2 === "tray") parts.push("Bake Tray al livello 2");
+  return parts.join(", ") || "Vedi passaggi";
+}
+function switchSvg(side) {
+  const up = side === "combi";
+  return `<svg viewBox="0 0 112 74" role="img" aria-label="Selettore su ${up ? "COMBI COOKER" : "AIR FRY/HOB"}"><rect class="sw-track" x="3" y="5" width="24" height="64" rx="12"/><circle class="sw-knob" cx="15" cy="${up ? 19 : 55}" r="8.5"/><text class="sw-lab${up ? " on" : ""}" x="36" y="17">COMBI<\/text><text class="sw-lab${up ? " on" : ""}" x="36" y="31">COOKER<\/text><text class="sw-lab${up ? "" : " on"}" x="36" y="53">AIR FRY<\/text><text class="sw-lab${up ? "" : " on"}" x="36" y="67">HOB<\/text><\/svg>`;
+}
+
+/* Valori grandi del pannello */
+const fmtMin = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? " " + (m % 60) : ""}`);
+function bigTemp(r) {
+  const t = String(r.temp || "");
+  const all = [...t.matchAll(/(\d{2,3})\s*°C/g)];
+  if (all.length) { const v = all[all.length - 1][1] + " °C"; return { v, s: t.trim() === v ? "" : t }; }
+  if (/auto/i.test(t)) return { v: "Auto", s: "Programma automatico" };
+  if (/non regolabile/i.test(t)) return { v: "Fissa", s: "Non si regola nel vapore" };
+  if (/^grill$/i.test(t.trim())) return { v: "Grill", s: "Calore dall'alto" };
+  if (/\bLO\b/.test(t) && /\bHI\b/.test(t)) return { v: "LO o HI", s: t };
+  const lv = [...t.matchAll(/\b(HI|LO|Hi5|Lo1)\b/g)];
+  if (lv.length) return { v: lv[lv.length - 1][1], s: t };
+  if (/livell/i.test(t)) return { v: "Livelli", s: t };
+  return { v: t.length <= 8 ? t : "Vedi nota", s: t.length <= 8 ? "" : t };
+}
+function bigTime(r) {
+  const t = String(r.time || "");
+  if (/^\s*\d+(–\d+)?\s*(min|h)\s*$/.test(t)) return { v: t.trim(), s: "" };
+  if (r.tmin > 0) return { v: fmtMin(r.tmin), s: t };
+  if (/auto/i.test(t)) return { v: "Auto", s: "Segnale a fine cottura" };
+  return { v: "Vedi nota", s: t };
+}
+
+/* ================= Scheda ricetta ================= */
+function recipeCard(r, opts = {}) {
+  const mode = MODES[r.m] || MODES.cb;
+  const side = mode.side;
+  const d = r.d || { l1: "pan", l2: null, w: !!r.water };
+  const water = Number(r.water) || 0;
+  const fav = store.favs.has(r.id);
+  const est = r.est || r.src === "stima";
+  const servTxt = r.serv && r.serv !== "—" ? (/^[\d–\s]+$/.test(r.serv) ? r.serv + " porzioni" : r.serv) : "";
+  const tp = bigTemp(r), tm = bigTime(r);
+  let h = `<article class="card">`;
+  h += `<header class="card-head">`;
+  h += `<p class="kicker">${opts.label ? `<b>${esc(opts.label)}:<\/b> ` : ""}${esc(r.cat || "")}${servTxt ? ", " + esc(servTxt) : ""}<\/p>`;
+  h += `<h2${opts.dialog ? ' id="dlg-title"' : ""}>${esc(r.t)}<\/h2>`;
+  h += `<p class="source">${r.src !== "stima" ? `<span>${esc(SRC[r.src] || "")}<\/span>` : ""}${est ? `<span class="est">Valori stimati: controlla la cottura<\/span>` : ""}<\/p>`;
+  h += `<\/header>`;
+  h += `<section class="panel" aria-label="Impostazioni da dare alla Combi">`;
+  h += `<div class="switch"><span class="ro-l">Selettore<\/span>${switchSvg(side)}<\/div>`;
+  h += `<div class="ro mode"><span class="ro-l">Modalità<\/span><span class="ro-v">${esc(mode.name)}<\/span><span class="ro-s">${esc(mode.it)}<\/span><\/div>`;
+  h += `<div class="ro temp"><span class="ro-l">${ICON.temp}Temperatura<\/span><span class="ro-v">${esc(tp.v)}<\/span>${tp.s ? `<span class="ro-s">${esc(tp.s)}<\/span>` : ""}<\/div>`;
+  h += `<div class="ro time"><span class="ro-l">${ICON.time}Tempo<\/span><span class="ro-v">${esc(tm.v)}<\/span>${tm.s ? `<span class="ro-s">${esc(tm.s)}<\/span>` : ""}<\/div>`;
+  h += `<div class="ro water${water ? "" : " none"}"><span class="ro-l">${ICON.water}Acqua<\/span><span class="ro-v">${water ? esc(water) + " ml" : "Niente"}<\/span><span class="ro-s">${water ? "nella Combi Pan" : "nessuna acqua"}<\/span><\/div>`;
+  h += `<\/section>`;
+  const l1txt = d.l1 ? L1_NAME[d.l1].replace("+ griglia", "con la griglia Crisper dentro") : "libero";
+  h += `<div class="setup"><div><h3>Come montarla<\/h3><ul class="levels">`;
+  h += `<li><span class="lv">Livello 2<\/span><span>${d.l2 === "tray" ? "Bake Tray, in alto" : "libero"}<\/span><\/li>`;
+  h += `<li><span class="lv">Livello 1<\/span><span>${esc(l1txt)}${water && (d.l1 === "pan" || d.l1 === "pan-crisper") ? `, con <span class="w">${esc(water)} ml d'acqua<\/span>` : ""}<\/span><\/li><\/ul>`;
+  if (r.wn && water) h += `<p class="start">${esc(r.wn)}<\/p>`;
+  h += `<p class="start"><b>Avvio:<\/b> ${esc(mode.pre)}<\/p><\/div>`;
+  h += `<div class="diagram">${diagram(d)}<\/div><\/div>`;
+  h += `<div class="body"><div><h3>Passaggi<\/h3><p class="steps-hint">Tocca un passaggio quando l'hai fatto.<\/p><ol class="steps">${(r.steps || []).map((s, i) => `<li><button type="button" class="step" data-act="step" aria-pressed="false"><span class="n"><span>${i + 1}<\/span>${ICON.check}<\/span><span>${esc(s)}<\/span><\/button><\/li>`).join("")}<\/ol>`;
+  if (r.tip) h += `<p class="tip">${esc(r.tip)}<\/p>`;
+  if (r.conf) h += `<p class="note-est">Attendibilità del consiglio: ${esc(r.conf)}<\/p>`;
+  h += `<\/div><div><h3>Ingredienti e quantità<\/h3><ul class="ing">${(r.ing || []).map((s) => `<li>${esc(s)}<\/li>`).join("")}<\/ul><\/div><\/div>`;
+  h += `<div class="actions">`;
+  if (r.tmin > 0) h += `<button type="button" class="btn primary" data-act="timer" data-id="${esc(r.id)}">${ICON.time}Avvia timer ${esc(fmtMin(r.tmin))}<\/button>`;
+  if (r.src === "claude" || opts.saveable) h += `<button type="button" class="btn" data-act="save-claude">Salva in Le mie ricette<\/button>`;
+  else if (r.src === "mia") h += `<button type="button" class="btn" data-act="del-mine" data-id="${esc(r.id)}">Elimina ricetta<\/button>`;
+  else h += `<button type="button" class="btn" data-act="fav" data-id="${esc(r.id)}" aria-pressed="${fav}">${fav ? "Togli dai preferiti" : "Salva nei preferiti"}<\/button>`;
+  if (opts.modeLink) h += `<button type="button" class="btn quiet" data-act="show-mode" data-m="${esc(r.m)}">Altre ricette ${esc(mode.name)}<\/button>`;
+  h += `<\/div><\/article>`;
+  return h;
+}
+
+/* ================= Archivio (account Claude o browser) ================= */
+const LS_KEY = "ricettario-combi-v1";
+const store = {
+  favs: new Set(), mine: [], mode: "memoria", db: null, uid: null,
+  async init() {
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) { const j = JSON.parse(raw); this.favs = new Set(j.favs || []); this.mine = j.mine || []; this.mode = "browser"; } else this.mode = "browser"; } catch (e) { this.mode = "memoria"; }
+    if (typeof window.claude?.use !== "function") return;
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      const uid = user ? await user.id() : null;
+      if (!db || !uid) return;
+      const col = db.collection("data/users/" + uid);
+      const snap = await Promise.race([col.get(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000))]);
+      const favs = new Set(), mine = [];
+      for (const doc of snap.docs) {
+        const v = doc.data() || {};
+        if (v.kind === "fav") (v.ids || []).forEach((i) => favs.add(i));
+        if (v.kind === "mine" && v.recipe) mine.push({ ...v.recipe, id: doc.id });
+      }
+      // porta nell'account quello che era salvato nel browser
+      for (const f of this.favs) favs.add(f);
+      this.db = db; this.uid = uid; this.mode = "account";
+      const local = this.mine.filter((m) => !mine.some((x) => x.id === m.id));
+      this.favs = favs; this.mine = mine.sort((a, b) => (b.created || 0) - (a.created || 0));
+      if (local.length) for (const m of local) await this.saveMine(m);
+      if (favs.size) await this.writeFavs();
+    } catch (e) { /* resta nel browser */ }
+  },
+  col() { return this.db.collection("data/users/" + this.uid); },
+  local() { try { localStorage.setItem(LS_KEY, JSON.stringify({ favs: [...this.favs], mine: this.mine })); } catch (e) {} },
+  async writeFavs() { if (this.mode === "account") await this.col().doc("preferiti").set({ kind: "fav", ids: [...this.favs] }); else this.local(); },
+  async toggleFav(id) { this.favs.has(id) ? this.favs.delete(id) : this.favs.add(id); await this.writeFavs(); },
+  async saveMine(r) {
+    const rec = { ...r, src: r.src === "claude" ? "claude" : "mia", id: r.id && r.id.startsWith("my-") ? r.id : "my-" + Date.now().toString(36), created: r.created || Date.now() };
+    if (this.mode === "account") await this.col().doc(rec.id).set({ kind: "mine", recipe: rec });
+    this.mine = [rec, ...this.mine.filter((m) => m.id !== rec.id)];
+    if (this.mode !== "account") this.local();
+    return rec;
+  },
+  async deleteMine(id) {
+    if (this.mode === "account") await this.col().doc(id).delete();
+    this.mine = this.mine.filter((m) => m.id !== id);
+    if (this.mode !== "account") this.local();
+  },
+  find(id) { return BY_ID[id] || this.mine.find((m) => m.id === id); }
+};
+function storeNote() {
+  const t = { account: "Le ricette e i preferiti sono salvati nel tuo account Claude: li ritrovi anche da altri dispositivi.", browser: "Le ricette e i preferiti sono salvati solo in questo browser.", memoria: "Questo browser non permette di salvare: le ricette restano finché non chiudi la pagina." }[store.mode];
+  $("#store-note").textContent = t;
+}
+
+/* ================= Assistente ================= */
+const EXAMPLES = ["pollo e patate", "cornetti surgelati", "soufflé al formaggio", "pane fatto in casa", "patatine surgelate", "pollo intero arrosto", "salmone surgelato", "lasagne", "uova sode", "riso basmati", "ragù", "pizza avanzata da scaldare", "torta di mele", "verdure al vapore"];
+let lastClaude = null;
+
+function renderSuggestion(text, isExample) {
+  const res = $("#result");
+  const { list, frozen } = suggest(text);
+  lastQuery = text;
+  if (!list.length) {
+    res.innerHTML = morePanel(text, false);
+    if (!isExample) announce(`${text} non è nel ricettario. Sotto trovi altre possibilità.`);
+    return;
+  }
+  const best = list[0];
+  if (!isExample) announce(`Trovato: ${best.t}. ${MODES[best.m].name}.`);
+  let h = recipeCard(best, { label: isExample ? "Esempio" : "Consiglio", modeLink: true });
+  const alts = list.slice(1, 6);
+  if (alts.length) {
+    h += `<div class="alts"><h3>${frozen ? "Altre possibilità" : "Forse cercavi anche"}<\/h3><div class="chips">${alts.map((r) => `<button class="chip" data-act="open" data-id="${esc(r.id)}">${esc(r.t)} (${esc(MODES[r.m].name)})<\/button>`).join("")}<\/div><\/div>`;
+  }
+  if (!isExample) h += morePanel(text, true);
+  res.innerHTML = h;
+}
+
+/* Pannello per i piatti che non sono nel ricettario */
+let lastQuery = "";
+const aiLabel = () => (STANDALONE ? "Chiedi all'AI" : "Chiedi a Claude");
+function webSearchUrl(text) { return "https://www.google.com/search?q=" + encodeURIComponent(text + " ricetta"); }
+function morePanel(text, compact) {
+  const aiAvailable = !!sampleFn || STANDALONE;
+  let h = `<div class="more${compact ? " compact" : ""}">`;
+  h += compact ? `<h3>Non è quello che cercavi?<\/h3>` : `<h3>«${esc(text)}» non è nel ricettario. Puoi:<\/h3>`;
+  h += `<div class="opts">`;
+  if (aiAvailable) h += `<div class="opt"><b>${esc(aiLabel())}<\/b><p>Ti prepara modalità, acqua, temperatura e tempi per questo piatto.${STANDALONE && !getKey() ? " Serve una chiave API (una volta sola)." : ""}<\/p><button class="btn small primary" type="button" data-act="ai">${esc(aiLabel())}<\/button><\/div>`;
+  h += `<div class="opt"><b>Converti da forno<\/b><p>Hai una ricetta per forno normale? Inserisci temperatura e tempo: ti dico come farla nella Combi.<\/p><button class="btn small" type="button" data-act="conv-open">Converti una ricetta<\/button><\/div>`;
+  h += `<div class="opt"><b>Cerca sul web<\/b><p>Trova la ricetta, poi torna qui e usa «Converti da forno».<\/p><a class="btn small" href="${esc(webSearchUrl(text))}" target="_blank" rel="noopener">Cerca «${esc(text.length > 28 ? text.slice(0, 26) + "…" : text)}»<\/a><\/div>`;
+  h += `<\/div><div class="conv" id="conv" hidden><\/div><div id="conv-out"><\/div><\/div>`;
+  return h;
+}
+
+/* ================= Convertitore da forno tradizionale ================= */
+const CONV_TYPES = {
+  dolce: "Torta, soufflé, muffin o dolce soffice",
+  pane: "Pane, focaccia o lievitato",
+  carne: "Carne o pesce al forno",
+  verdure: "Patate o verdure al forno",
+  forno: "Pasta al forno, lasagne, gratin, torte salate",
+  crema: "Sformati, flan, budini (bagnomaria)",
+  surg: "Surgelato da forno (panati, pizza, crocchette)"
+};
+function guessType(text) {
+  const q = norm(text);
+  const has = (re) => re.test(q);
+  if (has(/surgel|congel/)) return "surg";
+  if (has(/ souffl| torta| dolce| muffin| plumcake| ciambell| biscott| crostat| brownie| pan di spagna| tortin/)) return "dolce";
+  if (has(/ pane| focacc| pizz| brioche| lievit| panin| taralli| grissin/)) return "pane";
+  if (has(/ sformat| flan| budin| creme| crema| bagnomaria/)) return "crema";
+  if (has(/ pasta| lasagn| gratin| cannell| parmigian| torta salata| quiche| timball| pasticcio/)) return "forno";
+  if (has(/ patat| verdur| zucc| carot| melanzan| peperon| finocch| cavol| funghi/)) return "verdure";
+  if (has(/ poll| manzo| maiale| vitell| agnell| arrost| coniglio| tacchino| pesce| salmon| orata| branzin| merluzz| spigola| costin| salsicc/)) return "carne";
+  return "dolce";
+}
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const r5 = (v) => Math.round(v / 5) * 5;
+function convert(type, T, t, vent) {
+  const Ts = vent ? T + 10 : T; // temperatura equivalente forno statico
+  const range = (f1, f2) => { const a = Math.max(1, Math.round(t * f1)), b = Math.max(a, Math.round(t * f2)); return a === b ? `${a} min` : `${a}–${b} min`; };
+  const mid = (f1, f2) => Math.max(1, Math.round(t * (f1 + f2) / 2));
+  let o;
+  if (type === "dolce" || type === "crema") {
+    const temp = clamp(r5(type === "crema" ? Ts - 10 : Ts - 10), 105, 210);
+    const cook = mid(0.5, 0.65);
+    o = { m: "cb", temp: temp + " °C", time: range(0.5, 0.65) + " (+ circa 20 min di vapore iniziale)", tmin: cook,
+      water: cook <= 15 ? 120 : 240, d: { l1: "pan-crisper", l2: null, w: true },
+      steps: ["Versa l'acqua indicata nella Combi Pan e appoggia sopra la griglia Crisper.", "Metti lo stampo (o gli stampini) sulla griglia; Combi Pan al livello 1.", `COMBI COOKER, Combi Bake, ${temp} °C, ${range(0.5, 0.65)}. Il vapore iniziale fa già parte della cottura.`, "Fai la prova stecchino 5 minuti prima della fine e allunga se serve."],
+      tip: "Per soufflé e dolci molto delicati puoi usare anche Bake (AIR FRY/HOB) a 10 °C in meno del forno statico, con gli stampini nella Combi Pan e i tempi della ricetta originale." };
+  } else if (type === "pane") {
+    const temp = clamp(r5(Ts - 15), 105, 210);
+    o = { m: "cb", temp: temp + " °C", time: range(0.6, 0.75) + " (+ circa 20 min di vapore iniziale)", tmin: mid(0.6, 0.75), water: 240,
+      d: { l1: "pan-crisper", l2: null, w: true },
+      steps: ["Fai lievitare l'impasto con Prove a 35 °C (240 ml d'acqua nella Combi Pan, griglia sopra) finché raddoppia.", "Lascia l'acqua e l'impasto (in stampo o sulla carta forno) sulla griglia; livello 1.", `COMBI COOKER, Combi Bake, ${temp} °C, ${range(0.6, 0.75)}.`, "È cotto quando battendo sotto suona vuoto."],
+      tip: "Per pizze basse e croccanti preferisci Bake (AIR FRY/HOB) a 205–210 °C dopo 3 minuti di preriscaldamento." };
+  } else if (type === "carne" || type === "verdure") {
+    const temp = clamp(r5(type === "carne" ? Ts : Ts + 5), 150, 240);
+    const f1 = 0.55, f2 = 0.7, cook = mid(f1, f2);
+    const water = type === "verdure" ? 120 : 240;
+    const lo = Math.round(t * f1), hi = Math.round(t * f2);
+    const timeTxt = hi > 45 ? `${lo}–${hi} min: imposta 45 min, poi aggiungi ${Math.max(1, lo - 45)}–${hi - 45} min con la freccia del tempo` : range(f1, f2);
+    o = { m: "cc", temp: temp + " °C", time: timeTxt, tmin: Math.min(cook, 45), water,
+      d: t >= 50 && type === "carne" ? { l1: "pan-crisper", l2: null, w: true } : { l1: "pan", l2: "tray", w: true },
+      steps: t >= 50 && type === "carne"
+        ? ["Pezzo grande: versa l'acqua nella Combi Pan, appoggia la griglia Crisper e la carne sopra; livello 1.", `COMBI COOKER, Combi Crisp, ${temp} °C, ${range(f1, f2)}.`, "Controlla la temperatura al cuore prima di servire."]
+        : ["Versa l'acqua nella Combi Pan e inseriscila al livello 1.", "Disponi il cibo in un solo strato sul Bake Tray al livello 2.", `COMBI COOKER, Combi Crisp, ${temp} °C, ${range(f1, f2)}.`, "Gira a metà cottura."],
+      tip: (hi > 45 ? "Combi Crisp arriva al massimo a 45 minuti per ciclo. Se compare ADD WATER aggiungi 240 ml d'acqua. Per stufati e piatti in umido valuta Slow Cook. " : "") + "Se l'ingrediente è surgelato usa 475 ml d'acqua e qualche minuto in più." };
+  } else if (type === "forno") {
+    const temp = clamp(r5(Ts - 10), 120, 210);
+    o = { m: "bk", temp: temp + " °C", time: range(0.75, 0.9), tmin: mid(0.75, 0.9), water: 0,
+      d: { l1: "pan", l2: null, w: false },
+      steps: ["Prepara il piatto nella Combi Pan (o in una teglia che entri nel vano); livello 1.", `AIR FRY/HOB, Bake, ${temp} °C: 3 minuti di preriscaldamento, poi ${range(0.75, 0.9)}.`, "Per la crosticina finale: 2–4 minuti di Grill."],
+      tip: "Se la superficie scurisce troppo presto copri con un foglio di alluminio." };
+  } else {
+    const temp = clamp(r5(Ts - 20), 150, 240);
+    o = { m: "af", temp: temp + " °C", time: range(0.7, 0.85) + " (+5 min di preriscaldamento)", tmin: mid(0.7, 0.85), water: 0,
+      d: { l1: "pan-crisper", l2: null, w: false },
+      steps: ["Griglia Crisper nella Combi Pan; livello 1.", `AIR FRY/HOB, Air Fry, ${temp} °C: aggiungi 5 minuti di preriscaldamento e metti il cibo dopo i primi 5.`, `Cuoci ${range(0.7, 0.85)} in un solo strato, girando a metà.`],
+      tip: "Se sulla confezione c'è l'indicazione per friggitrice ad aria, segui quella." };
+  }
+  return o;
+}
+function openConverter() {
+  const box = $("#conv"); if (!box) return;
+  const type = guessType(lastQuery);
+  box.innerHTML = `<div class="form-grid">
+    <div class="field span2"><label for="c-type">Tipo di piatto<\/label><select id="c-type">${Object.entries(CONV_TYPES).map(([k, v]) => `<option value="${k}"${k === type ? " selected" : ""}>${esc(v)}<\/option>`).join("")}<\/select><\/div>
+    <div class="field"><label for="c-temp">Temperatura forno (°C)<\/label><input id="c-temp" type="number" inputmode="numeric" min="80" max="300" step="5" value="180"><\/div>
+    <div class="field"><label for="c-time">Tempo nel forno (min)<\/label><input id="c-time" type="number" inputmode="numeric" min="1" max="600" value="30"><\/div>
+    <div class="field check span2"><label><input id="c-vent" type="checkbox"> La ricetta indica forno ventilato<\/label><\/div>
+  <\/div><div class="ask-row"><button class="btn primary" type="button" data-act="conv-run">Converti per la Combi<\/button><\/div>`;
+  box.hidden = false;
+  $("#c-temp").focus();
+}
+function runConverter() {
+  const type = $("#c-type").value, T = Number($("#c-temp").value), t = Number($("#c-time").value), vent = $("#c-vent").checked;
+  const out = $("#conv-out");
+  if (!(T >= 80 && T <= 300) || !(t >= 1 && t <= 600)) { out.innerHTML = `<p class="status">Inserisci una temperatura tra 80 e 300 °C e un tempo tra 1 e 600 minuti.<\/p>`; return; }
+  const o = convert(type, T, t, vent);
+  const name = lastQuery ? lastQuery.charAt(0).toUpperCase() + lastQuery.slice(1) : CONV_TYPES[type];
+  const r = { id: "conv-" + Date.now().toString(36), src: "stima", est: true, t: name, cat: "Convertita da forno tradizionale", m: o.m, temp: o.temp, time: o.time, tmin: o.tmin,
+    water: o.water, wn: o.water ? (o.m === "cc" ? (type === "verdure" ? "120 ml (verdure)" : "240 ml (proteine fresche)") : (o.water === 120 ? "120 ml (cottura breve)" : "240 ml (cottura oltre 15 min)")) : "Niente acqua",
+    d: o.d, ing: [`Ricetta originale: ${CONV_TYPES[type].toLowerCase()}, forno ${vent ? "ventilato" : "statico"} ${T} °C per ${t} minuti`, "Ingredienti e dosi come nella ricetta originale"],
+    steps: o.steps, tip: o.tip, kw: [] };
+  lastClaude = r;
+  out.innerHTML = recipeCard(r, { label: "Conversione", saveable: true });
+  announce("Conversione pronta: " + MODES[o.m].name);
+  out.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+
+/* ================= AI: Claude nell'app oppure chiave API personale ================= */
+const AI_KEY = "ricettario-combi-ai";
+function getAI() { try { return JSON.parse(localStorage.getItem(AI_KEY) || "{}"); } catch (e) { return {}; } }
+function getKey() { return getAI().key || ""; }
+async function aiJSON(prompt) {
+  if (sampleFn) {
+    if (typeof sampleFn.json === "function") return await sampleFn.json(prompt, { modelTier: "default" });
+    const out = await sampleFn(prompt, { modelTier: "default" }); const m = String(out.text || "").match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null;
+  }
+  const cfg = getAI();
+  if (!cfg.key) throw { code: "no_key" };
+  let res;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": cfg.key, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: cfg.model || "claude-sonnet-5-5", max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
+    });
+  } catch (e) { throw { code: "offline" }; }
+  if (!res.ok) { let msg = ""; try { msg = (await res.json()).error?.message || ""; } catch (e) {} throw { code: "http_" + res.status, message: msg }; }
+  const j = await res.json();
+  const text = (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  const m = text.match(/\{[\s\S]*\}/);
+  return m ? JSON.parse(m[0]) : null;
+}
+function aiError(e) {
+  const c = e && e.code;
+  if (c === "not_granted") return "Il collegamento a Claude non è stato autorizzato.";
+  if (c === "rate_limited" || c === "http_429") return "Troppe richieste ravvicinate: riprova tra un minuto.";
+  if (c === "offline") return "Serve la connessione a internet per chiedere all'AI.";
+  if (c === "http_401" || c === "http_403") return "La chiave API non è valida o è stata disattivata: controllala nelle impostazioni qui sopra.";
+  if (c === "http_400" && /credit|billing|balance/i.test(e.message || "")) return "Il credito dell'account API è esaurito: ricaricalo sulla console di Anthropic.";
+  if (c === "http_404") return "Il modello scelto non è disponibile con questa chiave: prova l'altro nelle impostazioni.";
+  if (c === "http_529" || c === "http_500" || c === "http_503") return "Il servizio è momentaneamente sovraccarico: riprova tra poco.";
+  return "L'AI non ha risposto in modo utilizzabile. Riprova o descrivi il piatto con altre parole.";
+}
+
+/* Chiedi a Claude */
+let sampleFn = null;
+function modesForPrompt() {
+  return MODE_ORDER.map((k) => { const m = MODES[k]; return `- ${k} = ${m.name} (${SIDE[m.side]}): temperatura ${m.temp}; tempo ${m.time}; accessori: ${m.acc} Acqua: ${m.water} ${m.pre}`; }).join("\n");
+}
+function compact(r) { return { titolo: r.t, modalita: r.m, temp: r.temp, tempo: r.time, acqua_ml: r.water, accessori: accText(r.d) }; }
+async function askClaude() {
+  const text = $("#q").value.trim() || lastQuery;
+  const st = $("#ask-status");
+  if (!text) { st.textContent = "Scrivi prima cosa vuoi cucinare."; $("#q").focus(); return; }
+  if (!sampleFn && STANDALONE && !getKey()) {
+    const d = $("#ai-settings"); d.open = true; d.scrollIntoView({ block: "center" }); $("#ai-key").focus();
+    $("#ai-status").textContent = "Inserisci la chiave API per usare la ricerca con l'AI.";
+    return;
+  }
+  if (!sampleFn && !STANDALONE) return;
+  const btn = $("#ask-claude");
+  btn.disabled = true; st.textContent = "Sto preparando il consiglio…";
+  const refs = suggest(text).list.slice(0, 4).map(compact);
+  const prompt = `Sei un cuoco esperto del multicooker Ninja Combi SFP700EU. Una persona descrive cosa vuole cucinare e tu dici esattamente come farlo con questo apparecchio, in italiano.
+
+MODALITÀ DISPONIBILI (usa solo queste, rispetta i limiti):
+${modesForPrompt()}
+
+ACCESSORI: Combi Pan (teglia profonda, sempre al livello 1, contiene l'acqua per le funzioni COMBI COOKER), griglia Crisper (si appoggia DENTRO la Combi Pan), Bake Tray (vassoio smaltato non antiaderente, livello 2 in alto oppure livello 1).
+REGOLE ACQUA nella Combi Pan: Combi Crisp verdure 120 ml, proteine fresche 240 ml, proteine surgelate 475 ml; Combi Bake 120 ml fino a 15 minuti, 240 ml oltre; Combi Meals e Rice/Pasta: il liquido di cottura di riso o pasta; Steam circa 240 ml ogni 10 minuti; nelle funzioni AIR FRY/HOB niente acqua.
+Air Fry: aggiungere 5 minuti di preriscaldamento. Bake: 3 minuti di preriscaldamento. Combi Bake: circa 20 minuti di vapore iniziale con il cibo già dentro.
+
+RICETTE SIMILI DEL RICETTARIO (riferimento): ${JSON.stringify(refs)}
+
+RICHIESTA: «${text}»
+
+Rispondi SOLO con un oggetto JSON con queste chiavi:
+{"titolo": string, "modalita": uno tra ${MODE_ORDER.join(", ")}, "temperatura": string (es. "175 °C"), "tempo": string, "timer_min": numero di minuti di cottura, "acqua_ml": numero (0 se niente acqua), "acqua_nota": string breve, "livello1": "pan" | "pan-crisper" | "tray" | null, "livello2": "tray" | null, "ingredienti": [string], "passaggi": [string, frasi brevi che nominano selettore, modalità, temperatura e tempo], "consigli": string, "attendibilita": "alta" | "media" | "bassa"}`;
+  try {
+    const v = await aiJSON(prompt);
+    if (!v || !MODES[v.modalita]) throw { code: "bad", message: "risposta non valida" };
+    const l1 = ["pan", "pan-crisper", "tray"].includes(v.livello1) ? v.livello1 : null;
+    const water = Math.max(0, Math.round(Number(v.acqua_ml) || 0));
+    const r = {
+      id: "claude-" + Date.now().toString(36), src: "claude", est: true, t: String(v.titolo || text).slice(0, 140), m: v.modalita, cat: "Consiglio dell'AI",
+      d: { l1, l2: v.livello2 === "tray" ? "tray" : null, w: water > 0 }, water, wn: String(v.acqua_nota || ""),
+      temp: String(v.temperatura || ""), time: String(v.tempo || ""), tmin: Math.max(0, Math.min(720, Math.round(Number(v.timer_min) || 0))),
+      ing: Array.isArray(v.ingredienti) ? v.ingredienti.map(String).slice(0, 30) : [],
+      steps: Array.isArray(v.passaggi) ? v.passaggi.map(String).slice(0, 15) : [],
+      tip: String(v.consigli || ""), conf: String(v.attendibilita || ""), kw: []
+    };
+    lastClaude = r;
+    announce("Consiglio pronto: " + r.t);
+    $("#result").innerHTML = recipeCard(r, { label: STANDALONE ? "Consiglio dell'AI" : "Consiglio di Claude", modeLink: true });
+    st.textContent = "";
+    revealResult();
+  } catch (e) {
+    if (e && e.code === "not_granted") btn.hidden = true;
+    st.textContent = aiError(e);
+  } finally { btn.disabled = false; }
+}
+
+/* ================= Ricette ================= */
+const filt = { m: "all", cat: "", q: "", fav: false };
+function renderModeFilter() {
+  const counts = {}; R.forEach((r) => (counts[r.m] = (counts[r.m] || 0) + 1));
+  $("#mode-filter").innerHTML = `<button class="chip" data-m="all" aria-pressed="${filt.m === "all"}">Tutte (${R.length})<\/button>` +
+    MODE_ORDER.map((k) => `<button class="chip" data-m="${k}" aria-pressed="${filt.m === k}">${esc(MODES[k].name)} (${counts[k] || 0})<\/button>`).join("");
+}
+function rcard(r) {
+  const m = MODES[r.m], w = Number(r.water) || 0;
+  const est = r.est || r.src === "stima";
+  return `<button type="button" class="rcard" data-act="open" data-id="${esc(r.id)}">${store.favs.has(r.id) ? `<span class="star" aria-hidden="true">★<\/span><span class="sr-only">Nei preferiti.<\/span>` : ""}<span class="rc-title">${esc(r.t)}<\/span><span class="rc-mode"><span class="dot ${m.side}" aria-hidden="true"><\/span>${esc(m.name)}<\/span><span class="rc-meta"><span>${ICON.temp}${esc(bigTemp(r).v)}<\/span><span>${ICON.time}${esc(bigTime(r).v)}<\/span><span class="${w ? "w" : ""}">${ICON.water}${w ? esc(w) + " ml" : "senza acqua"}<\/span><\/span>${est ? `<span class="rc-flag">Valori stimati<\/span>` : ""}${r.src === "claude" ? `<span class="rc-flag">Consiglio salvato<\/span>` : ""}<\/button>`;
+}
+function renderRecipes() {
+  renderModeFilter();
+  const q = norm(filt.q);
+  const list = R.filter((r) => (filt.m === "all" || r.m === filt.m) && (!filt.cat || r.cat === filt.cat) && (!filt.fav || store.favs.has(r.id)) &&
+    (!filt.q.trim() || norm([r.t, r.cat, MODES[r.m].name, ...(r.kw || []), ...(r.ing || [])].join(" ")).includes(q.trim())));
+  $("#r-count").textContent = `${list.length} ricette`;
+  $("#r-grid").innerHTML = list.length ? list.map(rcard).join("") : `<div class="empty">Nessuna ricetta con questi filtri.<\/div>`;
+}
+
+/* ================= Modalità ================= */
+function renderModes() {
+  const counts = {}; R.forEach((r) => (counts[r.m] = (counts[r.m] || 0) + 1));
+  const card = (k) => { const m = MODES[k]; return `<div class="mcard"><h4>${esc(m.name)} <small>${esc(m.it)}<\/small><\/h4><dl><dt>Temperatura<\/dt><dd class="num">${esc(m.temp)}<\/dd><dt>Tempo<\/dt><dd class="num">${esc(m.time)}<\/dd><dt>Accessori<\/dt><dd>${esc(m.acc)}<\/dd><dt>Acqua<\/dt><dd>${esc(m.water)}<\/dd><dt>Avvio<\/dt><dd>${esc(m.pre)}<\/dd><dt>Ideale per<\/dt><dd>${esc(m.best)}<\/dd><\/dl><div><button class="btn small" data-act="show-mode" data-m="${k}">Vedi ${counts[k] || 0} ricette<\/button><\/div><\/div>`; };
+  $("#modes").innerHTML = `<div class="side combi"><h3 class="side-t"><span class="dot" aria-hidden="true"><\/span>Selettore su COMBI COOKER, con acqua e vapore<\/h3>${["cm","cc","cb","rp","st","pr"].map(card).join("")}<\/div>` +
+    `<div class="side air"><h3 class="side-t"><span class="dot air" aria-hidden="true"><\/span>Selettore su AIR FRY/HOB, senza acqua<\/h3>${["af","bk","gr","rh","sc","ss"].map(card).join("")}<\/div>`;
+  $("#legend").innerHTML = `<div><h3>Combi Pan<\/h3><p>Teglia profonda antiaderente, va sempre al livello 1. Nelle funzioni COMBI COOKER contiene l'acqua che diventa vapore. Senza di lei il display mostra ADD POT (tranne Bake).<\/p><\/div><div><h3>Griglia Crisper<\/h3><p>Griglia forata che si appoggia dentro la Combi Pan: tiene il cibo sopra l'acqua o sopra i grassi. Serve per Air Fry, Steam, Prove e pezzi grandi.<\/p><\/div><div><h3>Bake Tray<\/h3><p>Vassoio smaltato, non antiaderente: usa carta forno. Al livello 2 sopra la Combi Pan per i pasti completi, Combi Crisp e Combi Bake.<\/p><\/div>`;
+}
+
+/* ================= Le mie ricette ================= */
+function renderMine() {
+  storeNote();
+  const favs = [...store.favs].map((id) => BY_ID[id]).filter(Boolean);
+  const all = [...store.mine, ...favs];
+  $("#mine-grid").innerHTML = all.length ? all.map(rcard).join("") : `<div class="empty">Non hai ancora salvato nulla. Usa ☆ su una ricetta, salva un consiglio di Claude o scrivi una ricetta tua.<\/div>`;
+}
+function fillModeSelect() {
+  $("#f-m").innerHTML = MODE_ORDER.map((k) => `<option value="${k}">${esc(MODES[k].name)}, ${esc(MODES[k].it)}<\/option>`).join("");
+  const cats = [...new Set(R.map((r) => r.cat))].sort();
+  $("#r-cat").innerHTML = `<option value="">Tutte le categorie<\/option>` + cats.map((c) => `<option>${esc(c)}<\/option>`).join("");
+}
+
+/* ================= Dialogo ================= */
+let lastFocus = null;
+function openRecipe(id) {
+  const r = store.find(id) || (lastClaude && lastClaude.id === id ? lastClaude : null);
+  if (!r) return;
+  lastFocus = document.activeElement;
+  $("#dialog").innerHTML = recipeCard(r, { dialog: true }) + `<button type="button" class="btn small close" data-act="close">Chiudi<\/button>`;
+  $("#overlay").hidden = false;
+  ["header.top", "main", "footer"].forEach((s) => { const el = $(s); if (el) el.inert = true; });
+  $("#dialog .close").focus();
+}
+function closeDialog() {
+  if ($("#overlay").hidden) return;
+  $("#overlay").hidden = true; $("#dialog").innerHTML = "";
+  ["header.top", "main", "footer"].forEach((s) => { const el = $(s); if (el) el.inert = false; });
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab" || $("#overlay").hidden) return;
+  const f = $$('#dialog button, #dialog a[href], #dialog input, #dialog select, #dialog textarea').filter((x) => !x.disabled && x.offsetParent);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+/* ================= Timer ================= */
+const timer = { end: 0, left: 0, paused: false, label: "", iv: null, ac: null };
+function beep() {
+  try {
+    const ac = timer.ac; if (!ac) return;
+    [0, 0.35, 0.7].forEach((t) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 880; o.connect(g); g.connect(ac.destination); g.gain.setValueAtTime(0.0001, ac.currentTime + t); g.gain.exponentialRampToValueAtTime(0.3, ac.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.28); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.3); });
+  } catch (e) {}
+}
+const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(x).padStart(2, "0"); };
+function tick() {
+  const left = timer.paused ? timer.left : timer.end - Date.now();
+  $("#t-time").textContent = fmt(left);
+  if (!timer.paused && left <= 0) {
+    clearInterval(timer.iv); timer.iv = null;
+    $("#timer").classList.add("done"); $("#t-time").textContent = "Pronto!"; $("#t-pause").hidden = true;
+    beep(); setTimeout(beep, 1500); document.title = "Pronto! Ricettario Combi"; announce("Timer finito: " + timer.label);
+  } else if (!timer.paused) document.title = fmt(left) + " Ricettario Combi";
+}
+function startTimer(min, label) {
+  try { timer.ac = timer.ac || new (window.AudioContext || window.webkitAudioContext)(); timer.ac.resume && timer.ac.resume(); } catch (e) {}
+  timer.end = Date.now() + min * 60000; timer.paused = false; timer.label = label;
+  $("#t-label").textContent = label; $("#timer").hidden = false; $("#timer").classList.remove("done"); $("#t-pause").hidden = false; $("#t-pause").textContent = "Pausa";
+  clearInterval(timer.iv); timer.iv = setInterval(tick, 250); tick();
+}
+function stopTimer() { clearInterval(timer.iv); timer.iv = null; $("#timer").hidden = true; document.title = "Ricettario Combi"; }
+
+function announce(msg) { const el = $("#sr-live"); el.textContent = ""; setTimeout(() => { el.textContent = msg; }, 60); }
+
+/* ================= Navigazione ================= */
+const VIEWS = ["assistente", "ricette", "modalita", "mie"];
+function show(view) {
+  if (!VIEWS.includes(view)) view = "assistente";
+  VIEWS.forEach((v) => { $("#view-" + v).hidden = v !== view; const t = $("#tab-" + v); if (v === view) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); });
+  if (view === "ricette") renderRecipes();
+  if (view === "mie") renderMine();
+}
+function go(view) { if (location.hash !== "#" + view) location.hash = view; else show(view); }
+
+/* ================= Eventi ================= */
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-act],[data-view],[data-m]");
+  if (!b) return;
+  if (b.dataset.view) return go(b.dataset.view);
+  const act = b.dataset.act;
+  if (!act && b.dataset.m && b.closest("#mode-filter")) { filt.m = b.dataset.m; return renderRecipes(); }
+  if (act === "step") { b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); return; }
+  if (act === "open") return openRecipe(b.dataset.id);
+  if (act === "ai") return askClaude();
+  if (act === "conv-open") return openConverter();
+  if (act === "conv-run") return runConverter();
+  if (act === "close") return closeDialog();
+  if (act === "show-mode") { closeDialog(); filt.m = b.dataset.m; filt.cat = ""; $("#r-cat").value = ""; return go("ricette"); }
+  if (act === "timer") { const r = store.find(b.dataset.id) || lastClaude; if (r && r.tmin > 0) startTimer(r.tmin, `${r.t}, ${MODES[r.m].name}`); return; }
+  if (act === "fav") {
+    b.disabled = true;
+    try { await store.toggleFav(b.dataset.id); } catch (err) { $("#ask-status").textContent = "Non sono riuscito a salvare il preferito."; }
+    const on = store.favs.has(b.dataset.id); b.textContent = on ? "Togli dai preferiti" : "Salva nei preferiti"; announce(on ? "Aggiunta ai preferiti" : "Tolta dai preferiti"); b.setAttribute("aria-pressed", String(on)); b.disabled = false;
+    if (!$("#view-ricette").hidden) renderRecipes(); if (!$("#view-mie").hidden) renderMine();
+    return;
+  }
+  if (act === "save-claude" && lastClaude) {
+    b.disabled = true;
+    try { const saved = await store.saveMine(lastClaude); lastClaude = saved; b.textContent = "Salvata in Le mie ricette"; }
+    catch (err) { b.disabled = false; b.textContent = "Salvataggio non riuscito, riprova"; }
+    return;
+  }
+  if (act === "del-mine") {
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Premi di nuovo per eliminare"; return; }
+    try { await store.deleteMine(b.dataset.id); closeDialog(); renderMine(); } catch (err) { b.textContent = "Eliminazione non riuscita"; }
+  }
+});
+function revealResult() {
+  if (!matchMedia("(max-width: 820px)").matches) return;
+  const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("#result").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+}
+$("#ask-form").addEventListener("submit", (e) => { e.preventDefault(); const t = $("#q").value.trim(); $("#ask-status").textContent = ""; if (t) { renderSuggestion(t, false); $("#q").blur(); revealResult(); } });
+$("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#ask-form").requestSubmit(); } });
+$("#ask-claude").addEventListener("click", askClaude);
+$("#examples").innerHTML = `<span>Prova:<\/span>` + EXAMPLES.map((x) => `<button type="button" class="chip" data-ex="${esc(x)}">${esc(x)}<\/button>`).join("");
+$("#examples").addEventListener("click", (e) => { const c = e.target.closest("[data-ex]"); if (!c) return; $("#q").value = c.dataset.ex; renderSuggestion(c.dataset.ex, false); revealResult(); });
+$("#r-search").addEventListener("input", (e) => { filt.q = e.target.value; renderRecipes(); });
+$("#r-cat").addEventListener("change", (e) => { filt.cat = e.target.value; renderRecipes(); });
+$("#r-fav").addEventListener("click", (e) => { filt.fav = !filt.fav; e.currentTarget.setAttribute("aria-pressed", String(filt.fav)); renderRecipes(); });
+$("#overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeDialog(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#overlay").hidden) closeDialog(); });
+$("#t-stop").addEventListener("click", stopTimer);
+$("#t-plus").addEventListener("click", () => { if (timer.paused) timer.left += 60000; else if (timer.iv) timer.end += 60000; else { startTimer(1, timer.label); return; } tick(); });
+$("#t-pause").addEventListener("click", (e) => {
+  if (!timer.paused) { timer.left = timer.end - Date.now(); timer.paused = true; e.currentTarget.textContent = "Riprendi"; }
+  else { timer.end = Date.now() + timer.left; timer.paused = false; e.currentTarget.textContent = "Pausa"; }
+  tick();
+});
+$("#new-recipe").addEventListener("click", () => { $("#mine-form").hidden = false; $("#f-t").focus(); });
+$("#f-cancel").addEventListener("click", () => { $("#mine-form").reset(); $("#mine-form").hidden = true; });
+$("#mine-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const lines = (s) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+  const water = Math.max(0, Number($("#f-water").value) || 0);
+  const r = { t: $("#f-t").value.trim(), m: $("#f-m").value, cat: "Le mie ricette", temp: $("#f-temp").value.trim(), time: $("#f-time").value.trim(),
+    tmin: Math.max(0, Number($("#f-tmin").value) || 0), water, wn: water ? "" : "Niente acqua",
+    d: { l1: $("#f-l1").value || null, l2: $("#f-l2").value || null, w: water > 0 }, ing: lines($("#f-ing").value), steps: lines($("#f-steps").value), tip: $("#f-tip").value.trim(), src: "mia", kw: [] };
+  if (!r.t) return;
+  try { await store.saveMine(r); $("#mine-form").reset(); $("#mine-form").hidden = true; renderMine(); }
+  catch (err) { $("#f-status").textContent = err && err.code === "quota_exceeded" ? "Spazio esaurito: elimina qualche ricetta." : "Salvataggio non riuscito, riprova."; }
+});
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+/* ================= Impostazioni AI (versione autonoma) ================= */
+if (STANDALONE) {
+  $("#ai-settings").hidden = false;
+  const btn = $("#ask-claude"); btn.textContent = aiLabel(); btn.hidden = false;
+  const cfg = getAI(); if (cfg.model) $("#ai-model").value = cfg.model;
+  const showState = () => { $("#ai-key").value = ""; $("#ai-key").placeholder = getKey() ? "Chiave salvata ••••" + getKey().slice(-4) : "sk-ant-…"; };
+  showState();
+  $("#ai-save").addEventListener("click", () => {
+    const k = $("#ai-key").value.trim(), model = $("#ai-model").value;
+    const cur = getAI();
+    if (!k && !cur.key) { $("#ai-status").textContent = "Incolla la chiave API."; return; }
+    if (k && !/^sk-ant-/.test(k)) { $("#ai-status").textContent = "Non sembra una chiave Anthropic: deve iniziare con sk-ant-."; return; }
+    try { localStorage.setItem(AI_KEY, JSON.stringify({ key: k || cur.key, model })); $("#ai-status").textContent = "Salvata su questo dispositivo."; showState(); }
+    catch (e) { $("#ai-status").textContent = "Questo browser non permette di salvare la chiave."; }
+  });
+  $("#ai-remove").addEventListener("click", () => { try { localStorage.removeItem(AI_KEY); } catch (e) {} showState(); $("#ai-status").textContent = "Chiave rimossa."; });
+}
+
+/* ================= Avvio ================= */
+fillModeSelect();
+renderModes();
+renderSuggestion("pollo e patate", true);
+show(location.hash.slice(1));
+store.init().then(() => { storeNote(); if (!$("#view-mie").hidden) renderMine(); if (!$("#view-ricette").hidden) renderRecipes(); });
+
+function drawIcon() {
+  const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d");
+  x.fillStyle = "#0d5c6e"; x.beginPath(); x.roundRect(8, 8, 240, 240, 52); x.fill();
+  x.fillStyle = "#ffffff"; x.beginPath(); x.roundRect(46, 70, 164, 110, 18); x.fill();
+  x.strokeStyle = "#a8500b"; x.lineWidth = 14; x.lineCap = "round"; x.beginPath(); x.moveTo(80, 104); x.lineTo(176, 104); x.stroke();
+  x.strokeStyle = "#1764c0"; x.lineWidth = 12; x.beginPath(); x.moveTo(74, 148);
+  for (let i = 0; i < 4; i++) x.quadraticCurveTo(86 + i * 28, 132, 100 + i * 28, 148);
+  x.stroke();
+  return c.toDataURL("image/png");
+}
+if (typeof window.claude?.use === "function") {
+  window.claude.use("sample").then((s) => { if (s) { sampleFn = s; $("#ask-claude").hidden = false; } }).catch(() => {});
+  window.claude.use("desktop").then(async (d) => {
+    if (!d) return;
+    if (d.app?.dock) d.app.dock.setIcon(drawIcon()).catch(() => {});
+    try {
+      if ((await d.install?.state()) === "available") {
+        const b = $("#install"); b.hidden = false;
+        b.addEventListener("click", () => d.install.request().then((r) => { if (r === "installed") b.hidden = true; }).catch(() => {}));
+      }
+    } catch (e) {}
+  }).catch(() => {});
+}
+
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller; let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+}
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault(); installEvt = e;
+  const b = document.getElementById("install"); b.textContent = "Installa l'app"; b.hidden = false;
+  b.onclick = async () => { b.hidden = true; installEvt.prompt(); try { await installEvt.userChoice; } catch (err) {} installEvt = null; };
+});
+window.addEventListener("appinstalled", () => { document.getElementById("install").hidden = true; });
+</script>
+</body>
+</html>
