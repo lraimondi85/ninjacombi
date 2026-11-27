@@ -30,5 +30,5 @@ Al primo avvio con internet l'app si salva sul telefono: dopo funziona anche off
 
 4) AGGIORNARE L'APP
 Sostituisci index.html con la nuova versione e in sw.js cambia
-  const CACHE = "ricettario-combi-v1";   in   "ricettario-combi-v2"
+  const CACHE = "ricettario-combi-v2";   in   "ricettario-combi-v3" (e così via)
 così i telefoni scaricano la versione nuova alla prossima apertura con internet.
